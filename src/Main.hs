@@ -19,7 +19,7 @@ import Display
 copyToClipBoard :: String -> IO ()
 copyToClipBoard choice = do
   (Just hin, _, _, hp) <- createProcess (proc "xclip" ["-selection", "c"]) { std_in = CreatePipe }
-  hPutStrLn hin choice
+  hPutStr hin choice
   hClose hin
   _ <- waitForProcess hp
   return ()
