@@ -16,6 +16,15 @@ import Control.Monad
 import qualified Options as Opts
 import Display
 
+copyToClipBoard :: String -> IO ()
+copyToClipBoard choice = do
+  (Just hin, _, _, hp) <- createProcess (proc "xclip" ["-selection", "c"]) { std_in = CreatePipe }
+  hPutStrLn hin choice
+  hClose hin
+  _ <- waitForProcess hp
+  return ()
+
+
 main :: IO ()
 main = do
   --  Analyse des arguments
@@ -37,10 +46,9 @@ main = do
   -- Choix de l'emoji par le menu
   let emojis = V.toList emojisVector
   choice <- emojiMenu emojis
-  (Just hin, _, _, hp) <- createProcess (proc "xclip" ["-selection", "c"]) { std_in = CreatePipe }
-  hPutStrLn hin choice
-  hClose hin
-  _ <- waitForProcess hp
+
+  copyToClipBoard choice
+
   exitSuccess
 
 --  vim: set sts=2 ts=2 sw=2 tw=120 et :
