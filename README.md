@@ -65,7 +65,7 @@ Les paquets suivants sont nécessaires à la compilation:
 
 **Système**
 
-`xclip`: permet d'interragir avec le presse-papier du système.
+`xclip`: permet d'interagir avec le presse-papier du système.
 
 ### Compilation
 
@@ -75,7 +75,7 @@ Le projet utilise `cabal`. On construit donc le binaire comme suit:
 $ cabal build
 ```
 
-Le binaire résultant se trouve est `dist/build/emo/emo`.
+Le binaire résultant se trouve au chemin `dist/build/emo/emo`.
 
 ### Utilisation
 
@@ -86,7 +86,7 @@ $ cabal run -- -f data/emo.csv
 ```
 
 L'utilisateur peut aussi utiliser le binaire `dist/build/emo/emo`, mais c'est
-plus long à tapper.
+plus long à taper.
 
 ### Installation
 
