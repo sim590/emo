@@ -66,12 +66,12 @@ emojiMenu :: DecodedCsv -> IO String
 emojiMenu esl = runCurses $ do
   -- Configure NCurses
   setEcho False
-  win <- defaultWindow
+  win    <- defaultWindow
   (h, w) <- screenSize
 
   -- Affiche les choix à l'écran
   let nChoice = length esl
-      mec = maxEntryCount w h esl
+      mec     = maxEntryCount w h esl
   updateWindow win $ moveCursor 0 0
   writeChoices esl win
   updateWindow win $ do

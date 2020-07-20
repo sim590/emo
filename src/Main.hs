@@ -10,6 +10,7 @@ import System.Exit
 import System.Environment
 import System.Console.GetOpt
 import System.Process
+import System.Posix.Signals
 
 import Control.Monad
 
@@ -27,6 +28,10 @@ copyToClipBoard choice = do
 
 main :: IO ()
 main = do
+  _ <- installHandler sigTERM Default Nothing
+  _ <- installHandler sigINT  Default Nothing
+  _ <- installHandler sigHUP  Default Nothing
+
   --  Analyse des arguments
   args <- getArgs
   let (actions, _, errors) = getOpt RequireOrder Opts.options args
