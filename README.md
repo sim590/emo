@@ -72,7 +72,7 @@ Les paquets suivants sont nécessaires à la compilation:
 Le projet utilise `cabal`. On construit donc le binaire comme suit:
 
 ```sh
-$ cabal build
+$ cabal new-build
 ```
 
 Le binaire résultant se trouve au chemin `dist/build/emo/emo`.
@@ -82,7 +82,7 @@ Le binaire résultant se trouve au chemin `dist/build/emo/emo`.
 Après avoir compilé, on peut simplement utiliser le programme comme suit:
 
 ```sh
-$ cabal run -- -f data/emo.csv
+$ cabal new-run -- emo -f data/emo.csv
 ```
 
 L'utilisateur peut aussi utiliser le binaire `dist/build/emo/emo`, mais c'est
