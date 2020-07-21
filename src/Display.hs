@@ -100,7 +100,6 @@ updateMenuHandler esl title = do
 
 handleInput :: Window -> String -> DecodedCsv -> Curses Int
 handleInput win title esl = do
-  (h, w) <- screenSize
   let validChoice mchoice = case readMaybe mchoice of
         Just c -> 1 >= c || c <= nChoice
         _      -> False
