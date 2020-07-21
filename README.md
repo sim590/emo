@@ -75,7 +75,8 @@ Le projet utilise `cabal`. On construit donc le binaire comme suit:
 $ cabal new-build
 ```
 
-Le binaire résultant se trouve au chemin `dist/build/emo/emo`.
+Sur une machine 64-bit, le binaire résultant se trouve au chemin
+`dist-newstyle/build/x86_64-linux/ghc-8.6.5/emo-0.1.0.0/x/emo/build/emo/emo`.
 
 ### Utilisation
 
