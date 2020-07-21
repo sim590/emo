@@ -50,9 +50,6 @@ writeChoices es win = updateWindow win $ do
         return $ i + 1
   foldM_ drawIthEmoji 0 $ take (maxEntryCount w h es) es
 
-waitFor :: Window -> (Event -> Bool) -> Curses Event
-waitFor w p = fromJust <$> iterateWhile (\ (Just ev) -> not $ p ev) (getEvent w Nothing)
-
 accAndEchoUntil :: Window -> (Event -> Bool) -> Curses [Event]
 accAndEchoUntil w p = fmap catMaybes $ unfoldWhileM (\ (Just ev) -> not $ p ev) $ do
   jev <- getEvent w Nothing
