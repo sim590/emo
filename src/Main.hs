@@ -27,10 +27,11 @@ copyToClipBoard choice = do
 
 
 main :: IO ()
-main = do
-  _ <- installHandler sigTERM Default Nothing
-  _ <- installHandler sigINT  Default Nothing
-  _ <- installHandler sigHUP  Default Nothing
+main =
+     installHandler sigTERM Default Nothing
+  >> installHandler sigINT  Default Nothing
+  >> installHandler sigHUP  Default Nothing
+  >> do
 
   --  Analyse des arguments
   args <- getArgs
