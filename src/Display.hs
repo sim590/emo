@@ -1,4 +1,6 @@
 
+-- {-# LANGUAGE TypeApplications #-}
+
 module Display (
   maxEntryCount,
   emojiMenu
@@ -69,7 +71,13 @@ accAndEchoUntil w x0 p = fmap catMaybes $ unfoldWhileM (\ (Just ev) -> not $ p e
         moveCursor y (x-1)
         drawString " "
         moveCursor y (x-1)
-    Just (EventCharacter c)             -> drawString [c]
+    Just (EventCharacter c) ->
+      if c ==  chr (ord 'u' - 96) then do
+        (y, _) <- cursorPosition
+        moveCursor y x0
+        clearLine
+      else
+        drawString [c]
     _                                   -> return ()
   render
   return jev
