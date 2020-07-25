@@ -22,6 +22,8 @@ type DecodedCsv = [(String, String)]
 colOs :: Integer
 colOs = 2
 
+ctrlKey :: Char -> Char
+ctrlKey c = chr (ord c - 96)
 
 truncatedMsg :: String
 truncatedMsg = "// Certains choix ont été tronqués ... //"
@@ -70,13 +72,13 @@ accAndEchoUntil w x0 p = fmap catMaybes $ unfoldWhileM (\ (Just ev) -> not $ p e
         drawString " "
         moveCursor y (x-1)
     Just (EventCharacter c) ->
-      if c ==  chr (ord 'u' - 96) then do
+      if c == ctrlKey 'u' then do
         (y, _) <- cursorPosition
         moveCursor y x0
         clearLine
       else
         drawString [c]
-    _                                   -> return ()
+    _  -> return ()
   render
   return jev
 
