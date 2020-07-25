@@ -1,6 +1,4 @@
 
--- {-# LANGUAGE TypeApplications #-}
-
 module Display (
   maxEntryCount,
   emojiMenu
