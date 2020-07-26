@@ -17,6 +17,7 @@ import qualified Control.Monad.Reader as R
 import qualified Control.Monad.State as ST
 import Control.Monad.Loops
 
+import Clip
 
 import UI.NCurses
 
@@ -98,6 +99,7 @@ accAndEchoUntil p = do
   let x0 = fromIntegral $ length (inputTitle dconf)
       clear_chars = [
            ctrlKey 'u',
+           ctrlKey 'y'
         ]
   R.lift $ iterateUntil p $ do
         win <- ST.lift defaultWindow
@@ -121,6 +123,10 @@ accAndEchoUntil p = do
                 (y, _) <- cursorPosition
                 moveCursor y x0
                 clearLine
+              let n = fromIntegral $ nChoice dconf
+              when (c == ctrlKey 'y' && validChoice s n) $ do
+                let i = read s
+                ST.lift $ liftIO $ copyToClipBoard $ snd $ emojis dconf !! (i-1)
               put ""
             else do
               ST.lift $ updateWindow win $ drawString [c]

@@ -1,3 +1,4 @@
+
 module Main where
 
 import Data.Char
@@ -9,22 +10,13 @@ import System.IO
 import System.Exit
 import System.Environment
 import System.Console.GetOpt
-import System.Process
 import System.Posix.Signals
 
 import Control.Monad
 
 import qualified Options as Opts
 import Display
-
-copyToClipBoard :: String -> IO ()
-copyToClipBoard choice = do
-  (Just hin, _, _, hp) <- createProcess (proc "xclip" ["-selection", "c"]) { std_in = CreatePipe }
-  hPutStr hin choice
-  hClose hin
-  _ <- waitForProcess hp
-  return ()
-
+import Clip
 
 main :: IO ()
 main =
