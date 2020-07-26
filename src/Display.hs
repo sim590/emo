@@ -106,8 +106,12 @@ doBackspace ititle = do
 {-|
    Boucle sur les événements du clavier et effectue les actions appropriées.
 
-   * CTRL+U: efface l'entrée de l'utilisateur.
    * CTRL+Y: efface l'entrée et copie l'emoji associé au choix si l'entrée est valide.
+   * CTRL+B: déplace le curseur vers la gauche.
+   * CTRL+F: déplace le curseur vers la droite.
+   * CTRL+A: déplace le curseur au début de la ligne.
+   * CTRL+E: déplace le curseur à la fin de la ligne.
+   * CTRL+D: supprime une caractère sous le curseur.
    * Backspace: efface un caractère.
 -}
 accAndEchoUntil :: (Event -> Bool) -> ReaderT DisplayConf (StateT String Curses) Event
