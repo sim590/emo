@@ -6,7 +6,6 @@ import Data.Csv
 import qualified Data.Vector as V
 import qualified Data.ByteString.Lazy.UTF8 as BLU
 
-import System.IO
 import System.Exit
 import System.Environment
 import System.Console.GetOpt
