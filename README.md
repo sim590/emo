@@ -47,6 +47,14 @@ presse-papier du système.
 Choix (valeurs entre 1 et 110) ?
 ```
 
+### Touches
+
+* `CTRL+Y`: copie dans le presse-papier le choix courant fait par l'utilisateur
+  et efface la ligne d'entrée usager.
+* `CTRL+U`: efface la ligne d'entrée usager.
+* `Entrer`: valide le choix, copie celui-ci dans le presse-papier et quitte le
+  programme.
+
 ### Dépendances
 
 **Haskell**
