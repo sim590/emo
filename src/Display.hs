@@ -114,10 +114,10 @@ doBackspace ititle = do
    * CTRL+D: supprime une caractère sous le curseur.
    * Backspace: efface un caractère.
 -}
-accAndEchoUntil :: (Event -> Bool) -> ReaderT DisplayConf (StateT String Curses) Event
-accAndEchoUntil p = do
+handleEvents :: (Event -> Bool) -> ReaderT DisplayConf (StateT String Curses) Event
+handleEvents p = do
   dconf <- ask
-  let x0   = fromIntegral $ length (inputTitle dconf)
+  let x0     = fromIntegral $ length (inputTitle dconf)
       xmax s = x0 + fromIntegral (length s)
   R.lift $ iterateUntil p $ do
     win    <- ST.lift defaultWindow
@@ -213,7 +213,7 @@ handleInput = do
         ]
       n = fromIntegral $ nChoice dconf
   s <- iterateWhile (not . flip validChoice n) $ do
-    ev <- accAndEchoUntil userReadyOrResize
+    ev <- handleEvents userReadyOrResize
     pchoice <- R.lift ST.get
     if ev == EventResized then redrawMenu >> return ""
                           else return pchoice
