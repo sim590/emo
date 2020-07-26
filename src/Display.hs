@@ -102,25 +102,23 @@ accAndEchoUntil p = do
            ctrlKey 'y'
         ]
   R.lift $ iterateUntil p $ do
-        win <- ST.lift defaultWindow
-        jev <- ST.lift $ getEvent win Nothing
+        win    <- ST.lift defaultWindow
+        jev    <- ST.lift $ getEvent win Nothing
+        (y, x) <- ST.lift $ getCursor win
         ev  <- case jev of
-          Just (EventCharacter '\n') -> return $ EventCharacter '\n'
-          Just (EventSpecialKey KeyBackspace) -> do
-            ST.lift $ updateWindow win $ do
-              (y, x) <- cursorPosition
-              when (x > x0) $ do
-                moveCursor y (x-1)
-                drawString " "
-                moveCursor y (x-1)
+          Just e@(EventCharacter '\n') -> return e
+          Just e@(EventSpecialKey KeyBackspace) -> do
+            ST.lift $ updateWindow win $ when (x > x0) $ do
+              moveCursor y (x-1)
+              drawString " "
+              moveCursor y (x-1)
             s <- ST.get
             put $ if null s then s else init s
-            return $ EventSpecialKey KeyBackspace
-          Just (EventCharacter c) -> do
+            return e
+          Just e@(EventCharacter c) -> do
             if or ((== c) <$> clear_chars) then do
               s <- ST.get
               ST.lift $ updateWindow win $ do
-                (y, _) <- cursorPosition
                 moveCursor y x0
                 clearLine
               let n = fromIntegral $ nChoice dconf
@@ -132,7 +130,7 @@ accAndEchoUntil p = do
               ST.lift $ updateWindow win $ drawString [c]
               s <- ST.get
               put $ s ++ [c]
-            return $ EventCharacter c
+            return e
           Just e -> return e
           _      -> return $ EventUnknown 0
         ST.lift render
