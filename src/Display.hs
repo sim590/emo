@@ -7,11 +7,12 @@ module Display (
 import Data.List
 import Data.Digits
 import Data.Char
-import Data.Maybe
 
 import Text.Read
 
 import Control.Monad
+import Control.Monad.State
+import qualified Control.Monad.State as ST
 import Control.Monad.Loops
 
 
@@ -59,28 +60,44 @@ writeChoices es = do
   (y, _) <- cursorPosition
   moveCursor (y+2) 0
 
-accAndEchoUntil :: Window -> Integer -> (Event -> Bool) -> Curses [Event]
-accAndEchoUntil w x0 p = fmap catMaybes $ unfoldWhileM (\ (Just ev) -> not $ p ev) $ do
-  jev <- getEvent w Nothing
-  updateWindow w $ case jev of
-    Just EventResized                   -> return ()
-    Just (EventCharacter '\n')          -> return ()
-    Just (EventSpecialKey KeyBackspace) -> do
-      (y, x) <- cursorPosition
-      when (x > x0) $ do
-        moveCursor y (x-1)
-        drawString " "
-        moveCursor y (x-1)
-    Just (EventCharacter c) ->
-      if c == ctrlKey 'u' then do
-        (y, _) <- cursorPosition
-        moveCursor y x0
-        clearLine
-      else
-        drawString [c]
-    _  -> return ()
-  render
-  return jev
+accAndEchoUntil :: Integer -> (Event -> Bool) -> StateT String Curses ()
+accAndEchoUntil x0 p = void go
+  where
+        clear_chars = [
+             ctrlKey 'u'
+          ]
+        go = iterateUntil p $ do
+          win <- ST.lift defaultWindow
+          jev <- ST.lift $ getEvent win Nothing
+          ev  <- case jev of
+            Just (EventCharacter '\n') -> return $ EventCharacter '\n'
+            Just (EventSpecialKey KeyBackspace) -> do
+              ST.lift $ updateWindow win $ do
+                (y, x) <- cursorPosition
+                when (x > x0) $ do
+                  moveCursor y (x-1)
+                  drawString " "
+                  moveCursor y (x-1)
+              s <- ST.get
+              put $ if null s then s else init s
+              return $ EventSpecialKey KeyBackspace
+            Just (EventCharacter c) -> do
+              if or ((== c) <$> clear_chars) then do
+                s <- ST.get
+                ST.lift $ updateWindow win $ do
+                  (y, _) <- cursorPosition
+                  moveCursor y x0
+                  clearLine
+                put ""
+              else do
+                ST.lift $ updateWindow win $ drawString [c]
+                s <- ST.get
+                put $ s ++ [c]
+              return $ EventCharacter c
+            Just e -> return e
+            _      -> return $ EventUnknown 0
+          ST.lift render
+          return ev
 
 drawInputTitle :: String -> Int -> Int -> Update ()
 drawInputTitle title nChoice mec = do
@@ -94,41 +111,45 @@ drawInputTitle title nChoice mec = do
   clearLine
   drawString title
 
-updateMenuHandler :: DecodedCsv -> String -> Update ()
-updateMenuHandler esl title = do
+updateMenuHandler :: DecodedCsv -> String -> String -> Update ()
+updateMenuHandler esl title inputstr = do
   clear
   (h, w) <- windowSize
   let nChoice = length esl
       mec     = maxEntryCount w h esl
       scw     = fromIntegral $ spacedColWidth w esl
   if fromIntegral w >= maximum [scw, length title, length truncatedMsg] && h >= 3 then
-    writeChoices esl >> drawInputTitle title nChoice mec
+    writeChoices esl >> drawInputTitle title nChoice mec >> drawString inputstr
   else let w_too_small = "err: Fenêtre trop petite..." in
            when (w >= fromIntegral (length w_too_small)) $ drawString w_too_small
 
-handleInput :: Window -> String -> DecodedCsv -> Curses Int
-handleInput win title esl = do
+{-|
+   Boucle sur les caractères et événements envoyés par l'utilisateur.
+-}
+handleInput :: String -> DecodedCsv -> StateT String Curses Int
+handleInput title esl = do
   let validChoice mchoice = case readMaybe mchoice of
         Just c -> 1 >= c || c <= nChoice
         _      -> False
       nChoice = length esl
-  s <- iterateWhile (not . validChoice) $ do
-    updateWindow win $ updateMenuHandler esl title
-    render
-    (_, x0) <- getCursor win
-    let refresh_needed event = or $ (event ==) <$> [
+      refresh_needed event = or $ (event ==) <$> [
             EventCharacter '\n',
             EventResized
           ]
-    evs <- accAndEchoUntil win x0 refresh_needed
-    let evstring            = map (\ (EventCharacter c) -> c) cevs
-        cevs                = filter isDigitOrQuitCmd evs
-        isDigitOrQuitCmd ev =
-          case ev of
-            EventCharacter d -> isDigit d
-            _                -> False
-    return evstring
-  return (read s)
+      refresh :: Window -> StateT String Curses ()
+      refresh win = do
+        pchoice <- ST.get
+        ST.lift $ updateWindow win $ updateMenuHandler esl title pchoice
+        ST.lift render
+  s <- iterateWhile (not . validChoice) $ do
+    win     <- ST.lift defaultWindow
+    (_, x0) <- ST.lift $ getCursor win
+    accAndEchoUntil x0 refresh_needed
+    pchoice <- ST.get
+    unless (validChoice pchoice) $ ST.put ""
+    refresh win
+    return pchoice
+  return $ read s
 
 emojiMenu :: DecodedCsv -> IO String
 emojiMenu esl = runCurses $ do
@@ -140,10 +161,10 @@ emojiMenu esl = runCurses $ do
   let title = "Choix (valeurs entre 1 et "++ show (length esl) ++ ") ? "
   updateWindow win $ do
     moveCursor 0 0
-    updateMenuHandler esl title
+    updateMenuHandler esl title ""
   render
 
-  chosen_id <- handleInput win title esl
+  chosen_id <- flip evalStateT "" $ handleInput title esl
   return $ snd $ esl !! (chosen_id-1)
 
 --  vim: set sts=2 ts=2 sw=2 tw=120 et :
