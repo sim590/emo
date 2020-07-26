@@ -115,53 +115,48 @@ accAndEchoUntil p = do
   dconf <- ask
   let x0   = fromIntegral $ length (inputTitle dconf)
       xmax s = x0 + fromIntegral (length s)
-      clear_chars = [
-           ctrlKey 'u',
-           ctrlKey 'y'
-        ]
   R.lift $ iterateUntil p $ do
-        win    <- ST.lift defaultWindow
-        jev    <- ST.lift $ getEvent win Nothing
-        (y, x) <- ST.lift $ getCursor win
-        let updateW = ST.lift . updateWindow win
-            moveRight = do
-              s <- ST.get
-              when (x < xmax s) $ updateW $ moveCursor y (x+1)
-            moveLeft  = when (x > x0) $ updateW $ moveCursor y (x-1)
-        ev  <- case jev of
-          Just e@(EventCharacter '\n')           -> return e
-          Just e@(EventSpecialKey KeyLeftArrow)  -> moveLeft  >> return e
-          Just e@(EventSpecialKey KeyRightArrow) -> moveRight >> return e
-          Just e@(EventSpecialKey KeyBackspace)  -> do
-            doBackspace $ inputTitle dconf
-            return e
-          Just e@(EventCharacter c) -> do
-            s <- ST.get
-            if or ((== c) <$> clear_chars) then do
-              updateW $ do
-                moveCursor y x0
-                clearLine
-              let n = fromIntegral $ nChoice dconf
-              when (c == ctrlKey 'y' && validChoice s n) $ do
-                let i = read s
-                ST.lift $ liftIO $ copyToClipBoard $ snd $ emojis dconf !! (i-1)
-              put ""
-            -- Quelques touches de readline
-            else if c == ctrlKey 'd' then when (x < xmax s) $ do
-              moveRight
-              doBackspace $ inputTitle dconf
-            else if c == ctrlKey 'b' then moveLeft
-            else if c == ctrlKey 'f' then moveRight
-            else if c == ctrlKey 'a' then updateW $ moveCursor y x0
-            else if c == ctrlKey 'e' then updateW $ moveCursor y $ xmax s
-            else do
-              updateW $ drawString [c]
-              put $ s ++ [c]
-            return e
-          Just e -> return e
-          _      -> return $ EventUnknown 0
-        ST.lift render
-        return ev
+    win    <- ST.lift defaultWindow
+    jev    <- ST.lift $ getEvent win Nothing
+    (y, x) <- ST.lift $ getCursor win
+    let updateW    = ST.lift . updateWindow win
+        clearInput = updateW (moveCursor y x0 >> clearLine) >> put ""
+        moveRight  = do
+          s <- ST.get
+          when (x < xmax s) $ updateW $ moveCursor y (x+1)
+        moveLeft = when (x > x0) $ updateW $ moveCursor y (x-1)
+    ev  <- case jev of
+      Just e@(EventCharacter '\n')           -> return e
+      Just e@(EventSpecialKey KeyLeftArrow)  -> moveLeft  >> return e
+      Just e@(EventSpecialKey KeyRightArrow) -> moveRight >> return e
+      Just e@(EventSpecialKey KeyBackspace)  -> do
+        doBackspace $ inputTitle dconf
+        return e
+      Just e@(EventCharacter c) -> do
+        s <- ST.get
+        let n = fromIntegral $ nChoice dconf
+        if c == ctrlKey 'y' then when (validChoice s n) $ do
+          clearInput
+          let i = read s
+          ST.lift $ liftIO $ copyToClipBoard $ snd $ emojis dconf !! (i-1)
+        -- Quelques touches de readline
+        else if c == ctrlKey 'u' then clearInput
+        else if c == ctrlKey 'd' then when (x < xmax s) $ do
+          moveRight
+          doBackspace $ inputTitle dconf
+        else if c == ctrlKey 'b' then moveLeft
+        else if c == ctrlKey 'f' then moveRight
+        else if c == ctrlKey 'a' then updateW $ moveCursor y x0
+        else if c == ctrlKey 'e' then updateW $ moveCursor y $ xmax s
+        -- On affiche tout autre caractère à la ligne.
+        else do
+          updateW $ drawString [c]
+          put $ s ++ [c]
+        return e
+      Just e -> return e
+      _      -> return $ EventUnknown 0
+    ST.lift render
+    return ev
 
 {-|
    Dessine l'invite d'entrée pour l'utilisateur.
