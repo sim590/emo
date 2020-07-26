@@ -185,15 +185,12 @@ handleInput = do
           EventCharacter '\n',
           EventResized
         ]
-      refresh = redrawMenu
       n = fromIntegral $ nChoice dconf
   s <- iterateWhile (not . flip validChoice n) $ do
     ev <- accAndEchoUntil userReadyOrResize
     pchoice <- R.lift ST.get
-    if ev == EventResized then
-      refresh
-    else unless (validChoice pchoice n) $ R.lift $ ST.put ""
-    return pchoice
+    if ev == EventResized then redrawMenu >> return ""
+                          else return pchoice
   return $ read s
 
 {-|
