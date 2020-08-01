@@ -97,6 +97,17 @@ $ cabal new-run -- emo -f data/emo.csv
 L'utilisateur peut aussi utiliser le binaire `dist/build/emo/emo`, mais c'est
 plus long à taper.
 
+### Documentation
+
+Pour générer la documentation, simplement entrer par exemple:
+
+```sh
+$ cabal new-haddock
+```
+
+Par la suite, le fichier `dist-new/**/index.html` contient le point d'entrée du
+document web.
+
 ### Installation
 
 Simplement placer le binaire dans un répertoire en concordance avec la valeur de
