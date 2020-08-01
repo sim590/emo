@@ -109,6 +109,7 @@ doBackspace = do
    Boucle sur les événements du clavier et effectue les actions appropriées.
 
    * CTRL+Y: efface l'entrée et copie l'emoji associé au choix si l'entrée est valide.
+   * CTRL+I: affiche de l'information sur l'emoji.
    * CTRL+R: choix aléatoire d'un emoji et le copie dans la presse-papier.
    * CTRL+L: redessine l'écran.
    * CTRL+B: déplace le curseur vers la gauche.
@@ -141,12 +142,17 @@ handleEvents p = do
       Just e@(EventCharacter c) -> do
         s <- ST.get
         let n = fromIntegral $ nChoice dconf
+            emoji i         = getEmoji (emojis dconf) (i-1)
+            emojiInfo i     = getEmojiInfo (emojis dconf) (i-1)
+            emojiPlusInfo i = emoji i ++ " " ++ "(" ++ emojiInfo i ++ ")"
             clearInputAndCopy i = do
               clearInput
-              let emoji = getEmoji (emojis dconf) (i-1)
-              liftRST $ liftIO $ copyToClipBoard emoji
-              updateW $ drawBottomInfo $ emoji ++ " copié dans le presse-papier..."
-        if c == ctrlKey 'y' then when (validChoice s n) $ clearInputAndCopy $ read s
+              liftRST $ liftIO $ copyToClipBoard $ emoji i
+              updateW $ drawBottomInfo $ emojiPlusInfo i ++ " copié dans le presse-papier..."
+        if      c == ctrlKey 'y' then when (validChoice s n) $ clearInputAndCopy $ read s
+        else if c == ctrlKey 'i' then when (validChoice s n) $ do
+          let i = read s
+          updateW $ drawBottomInfo $ emojiPlusInfo i
         else if c == ctrlKey 'r' then do
           i <- liftRST $ liftIO $ randomRIO (1, length (emojis dconf) - 1)
           clearInputAndCopy i
