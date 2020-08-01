@@ -56,7 +56,7 @@ maxColWidth winWmax es = min winWmax (eWmax es)
         eWmax = fromIntegral . length . snd . maximumBy comprule
 
 maxEntryCount :: Integer -> Integer -> [(String, String)] -> Int
-maxEntryCount w h es = fromInteger $ (h-2) * maxColCount w es
+maxEntryCount w h es = fromInteger $ (h-3) * maxColCount w es
 
 {-|
    Affiche les choix d'emojis à l'écran.
@@ -141,7 +141,9 @@ handleEvents p = do
         let n = fromIntegral $ nChoice dconf
             clearInputAndCopy i = do
               clearInput
-              liftRST $ liftIO $ copyToClipBoard $ getEmoji (emojis dconf) (i-1)
+              let emoji = getEmoji (emojis dconf) (i-1)
+              liftRST $ liftIO $ copyToClipBoard emoji
+              updateW $ drawBottomInfo $ emoji ++ " copié dans le presse-papier..."
         if c == ctrlKey 'y' then when (validChoice s n) $ clearInputAndCopy $ read s
         else if c == ctrlKey 'r' then do
           i <- liftRST $ liftIO $ randomRIO (1, length (emojis dconf) - 1)
@@ -162,6 +164,20 @@ handleEvents p = do
       _      -> return $ EventUnknown 0
     liftRST render
     return ev
+
+{-|
+   Dessine un message d'information au bas de l'écran. Le curseur est
+   repositionné à son emplacement de départ.
+
+   Hypothèse: le curseur Curses se trouve au niveau de la ligne d'entrée usager.
+-}
+drawBottomInfo :: String -> Update ()
+drawBottomInfo infos = do
+  (y, x) <- cursorPosition
+  moveCursor (y+1) 0
+  clearLine
+  drawString $ "`--> " ++ infos
+  moveCursor y x
 
 {-|
    Dessine l'invite d'entrée pour l'utilisateur.
