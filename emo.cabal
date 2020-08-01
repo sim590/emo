@@ -18,7 +18,11 @@ version:             0.1.0.0
 synopsis:            Choisir son emoticône
 
 -- A longer description of the package.
--- description:
+description:        
+    Le programme `emo` permet de choisir un emoticône dans une liste tirée d'un
+    fichier CSV contenant les émoticônes et les descriptions de chacun.
+    L'interface usager permet différents moyens d'interaction autant interactive
+    que sur ligne de commande.
 
 -- A URL where users can report bugs.
 -- bug-reports:
@@ -70,7 +74,6 @@ executable emo
                        ncurses,
                        utf8-string,
                        vector,
-                       vector-algorithms,
                        monad-loops,
                        mtl,
                        digits,

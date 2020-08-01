@@ -35,31 +35,47 @@ liftRST = R.lift . ST.lift
 colOs :: Integer
 colOs = 2
 
+{-| Fournit le caractère correspondant à la combinaison de touche CTRL et le
+   caractère d'entrée.
+-}
 ctrlKey :: Char -> Char
 ctrlKey c = chr (ord c - 96)
 
+{-| Message s'affichant lorsque la liste des choix est tronquée.
+-}
 truncatedMsg :: String
 truncatedMsg = "// Certains choix ont été tronqués ... //"
 
+{-| Le nombre maximal de colonnes.
+-}
 maxColCount :: Integer -> [(String, String)] -> Integer
 maxColCount w es = w `div` spacedColWidth w es
 
+{-| Largeur maximal d'un index considérant le nombre maximal d'indexes.
+-}
 maxIWidth :: [(String, String)] -> Integer
 maxIWidth es = fromIntegral $ length $ digits 10 $ length es
 
+{-| Largeur d'une colonne en considérant la largeur maximale d'une colonne, la
+   largeur maximal de l'index et les espaces blancs pour alignement des indexes.
+-}
 spacedColWidth :: Integer -> [(String, String)] -> Integer
 spacedColWidth w es = maxColWidth w es + maxIWidth es + colOs
 
+{-| La largeur maximale d'une colonne considérant la largeur de chacun des
+   emojis.
+-}
 maxColWidth :: Integer -> [(String, String)] -> Integer
 maxColWidth winWmax es = min winWmax (eWmax es)
   where comprule (_, e1) (_, e2) = compare (length e1) (length e2)
         eWmax = fromIntegral . length . snd . maximumBy comprule
 
+{-| Le nombre maximal d'emoji pouvant s'afficher sur l'écran.
+-}
 maxEntryCount :: Integer -> Integer -> [(String, String)] -> Int
 maxEntryCount w h es = fromInteger $ (h-3) * maxColCount w es
 
-{-|
-   Affiche les choix d'emojis à l'écran.
+{-| Affiche les choix d'emojis à l'écran.
 -}
 writeChoices :: DecodedCsv -> Update ()
 writeChoices es = do
@@ -75,8 +91,7 @@ writeChoices es = do
   (y, _) <- cursorPosition
   moveCursor (y+2) 0
 
-{-|
-   Détermine si le choix est valide.
+{-| Détermine si le choix est valide.
 
    * ch_str: (String) le choix.
    * n: (Integer) le nombre de choix totaux.
@@ -86,6 +101,9 @@ validChoice ch_str n = case readMaybe ch_str of
   Just c -> 1 >= c || c <= n
   _      -> False
 
+{-| Effectue une suppression d'un caractère à gauche du cruseur lorsque le
+   celui-ci se trouve sur la ligne d'entrée usager.
+-}
 doBackspace :: ReaderT DisplayConf (StateT String Curses) ()
 doBackspace = do
   dconf <- ask
@@ -105,8 +123,7 @@ doBackspace = do
       drawString resul
       moveCursor y (x-1)
 
-{-|
-   Boucle sur les événements du clavier et effectue les actions appropriées.
+{-| Boucle sur les événements du clavier et effectue les actions appropriées.
 
    * CTRL+Y: efface l'entrée et copie l'emoji associé au choix si l'entrée est valide.
    * CTRL+I: affiche de l'information sur l'emoji.
@@ -174,8 +191,7 @@ handleEvents p = do
     liftRST render
     return ev
 
-{-|
-   Dessine un message d'information au bas de l'écran. Le curseur est
+{-| Dessine un message d'information au bas de l'écran. Le curseur est
    repositionné à son emplacement de départ.
 
    Hypothèse: le curseur Curses se trouve au niveau de la ligne d'entrée usager.
@@ -188,8 +204,7 @@ drawBottomInfo infos = do
   drawString $ "`--> " ++ infos
   moveCursor y x
 
-{-|
-   Dessine l'invite d'entrée pour l'utilisateur.
+{-| Dessine l'invite d'entrée pour l'utilisateur.
 
    Hypothèse: le curseur Curses se trouve au niveau de la ligne d'entrée usager.
 -}
@@ -205,8 +220,7 @@ drawInputTitle title n mec = do
   clearLine
   drawString title
 
-{-|
-   Redessine le menu.
+{-| Redessine le menu.
 
    Cette fonction est normalement appelée lorsque le terminal est redimensionné.
 -}
@@ -229,8 +243,7 @@ redrawMenu = do
              when (w >= fromIntegral (length w_too_small)) $ drawString w_too_small
   liftRST render
 
-{-|
-   Boucle sur les caractères et événements envoyés par l'utilisateur.
+{-| Boucle sur les caractères et événements envoyés par l'utilisateur.
 -}
 handleInput :: ReaderT DisplayConf (StateT String Curses) Int
 handleInput = do
@@ -247,8 +260,7 @@ handleInput = do
                           else return pchoice
   return $ read s
 
-{-|
-   Affiche le menu d'emoji à l'utilisateur et lui permet de choisir son emoji.
+{-| Affiche le menu d'emoji à l'utilisateur et lui permet de choisir son emoji.
 -}
 emojiMenu :: DecodedCsv -> IO String
 emojiMenu esl = runCurses $ do

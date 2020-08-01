@@ -21,6 +21,13 @@ import Display
 import Clip
 import Utils
 
+{-|
+   Sélectionne un emoji selon les options passés à la ligne de commande.
+
+   * Si l'option -`c` a été passée la ligne de commande, alors le choix récupéré
+     directement.
+   * Sinon, le menu interactif est affiché à l'utilisateur.
+-}
 selectEmoji :: Opts.Options -> DecodedCsv -> IO String
 selectEmoji opts emojis = do
   let cmdline_choice = fromJust $ Opts.optChoice opts
@@ -32,6 +39,9 @@ selectEmoji opts emojis = do
       return $ getEmoji emojis cmdline_choice
     Opts.Menu -> emojiMenu emojis
 
+{-|
+   Le point d'entrée du programme.
+-}
 main :: IO ()
 main =
      installHandler sigTERM Default Nothing

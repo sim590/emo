@@ -6,6 +6,9 @@ module Clip (
 import System.IO
 import System.Process
 
+{-|
+   Copie une chaîne de caractère dans le presse-papier. Cela utilise le programme `xclip` sur X.
+-}
 copyToClipBoard :: String -> IO ()
 copyToClipBoard choice = do
   (Just hin, _, _, hp) <- createProcess (proc "xclip" ["-selection", "c"]) { std_in = CreatePipe }

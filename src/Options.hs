@@ -19,14 +19,26 @@ import Text.Read
 
 data SelectMode = Menu | CmdLine
 
+{-| Options récupérées à la ligne de commande.
+-}
 data Options = Options {
+  {-| Le chemin vers le fichier CSV à lire. -}
   optInfile :: IO String,
+  {-| Mode de sélection de l'emoji. -}
   optSelect :: SelectMode,
+  {-| Le choix passé à la ligne de commande avec l'option -`c`. -}
   optChoice :: Maybe Int,
+  {-| Si le programme devrait être silencieux ou non. -}
   optSilent :: Bool,
+  {-| Si le programme devrait choisir un emoji au hasard ou non. -}
   optRandom :: Bool
 }
 
+{-| Valide les options à la ligne de commande. Ci-après, nous listons les
+   restrictions sur les options:
+
+  * L'option -`c` doit être dans l'intervalle \(0 < c < n\) où \(n\) est le nombre d'emojis.
+-}
 validateOptions :: Options -> IO Options
 validateOptions opts = do
   oc <- case optChoice opts of
@@ -43,6 +55,8 @@ optChoiceNotIntErrMsg = "erreur: un entier doit être passé à -n."
 programVersion :: Double
 programVersion = 0.1
 
+{-| Options par défaut pour chacun des membres de `Options`.
+-}
 defaultOptions :: Options
 defaultOptions = Options {
   optInfile = getXdgDirectory XdgConfig "emo.csv",
@@ -52,11 +66,15 @@ defaultOptions = Options {
   optRandom = False
 }
 
+{-| Affiche l'aide du programme sur la sortie d'erreur.
+-}
 showHelp :: IO ()
 showHelp = do
   prg <- getProgName
   hPutStrLn stderr (usageInfo (prg ++ " -- " ++ "choisir son émoticône") options)
 
+{-| La liste des descriptions d'options à la ligne de commande.
+-}
 options :: [ OptDescr (Options -> IO Options) ]
 options =
     [
