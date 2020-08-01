@@ -35,7 +35,7 @@ validateOptions opts = do
   return opts { optChoice = return oc }
 
 optChoiceOutOfRangeErrMsg :: String
-optChoiceOutOfRangeErrMsg = "erreur: le nombre passé à -n est inadmissible."
+optChoiceOutOfRangeErrMsg = "erreur: le nombre passé à -c est inadmissible."
 
 optChoiceNotIntErrMsg :: String
 optChoiceNotIntErrMsg = "erreur: un entier doit être passé à -n."
