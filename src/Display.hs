@@ -16,6 +16,8 @@ import qualified Control.Monad.Reader as R
 import qualified Control.Monad.State as ST
 import Control.Monad.Loops
 
+import System.Random
+
 import Clip
 import Utils
 
@@ -137,10 +139,13 @@ handleEvents p = do
       Just e@(EventCharacter c) -> do
         s <- ST.get
         let n = fromIntegral $ nChoice dconf
-        if c == ctrlKey 'y' then when (validChoice s n) $ do
-          clearInput
-          let i = read s
-          ST.lift $ liftIO $ copyToClipBoard $ getEmoji (emojis dconf) (i-1)
+            clearInputAndCopy i = do
+              clearInput
+              ST.lift $ liftIO $ copyToClipBoard $ getEmoji (emojis dconf) (i-1)
+        if c == ctrlKey 'y' then when (validChoice s n) $ clearInputAndCopy $ read s
+        else if c == ctrlKey 'r' then do
+          i <- ST.lift $ liftIO $ randomRIO (1, length (emojis dconf) - 1)
+          clearInputAndCopy i
         -- Quelques touches de readline
         else if c == ctrlKey 'u' then clearInput
         else if c == ctrlKey 'd' then when (x < xmax s) $ do
