@@ -1,6 +1,5 @@
 
 module Display (
-  maxEntryCount,
   emojiMenu
 ) where
 
@@ -110,7 +109,7 @@ doBackspace ititle = do
    * CTRL+F: déplace le curseur vers la droite.
    * CTRL+A: déplace le curseur au début de la ligne.
    * CTRL+E: déplace le curseur à la fin de la ligne.
-   * CTRL+D: supprime un caractère sous le curseur.Csv
+   * CTRL+D: supprime un caractère sous le curseur.
    * Backspace: efface un caractère.
 -}
 handleEvents :: (Event -> Bool) -> ReaderT DisplayConf (StateT String Curses) Event
