@@ -59,7 +59,7 @@ main =
   emoji <- if Opts.optRandom opts then snd . (emojis !!) <$> randomRIO (1, length emojis - 1)
                              else selectEmoji opts emojis
   copyToClipBoard emoji
-  putStrLn emoji
+  unless (Opts.optSilent opts) $ putStrLn emoji
 
   exitSuccess
 

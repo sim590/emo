@@ -23,6 +23,7 @@ data Options = Options {
   optInfile :: IO String,
   optSelect :: SelectMode,
   optChoice :: Maybe Int,
+  optSilent :: Bool,
   optRandom :: Bool
 }
 
@@ -47,6 +48,7 @@ defaultOptions = Options {
   optInfile = getXdgDirectory XdgConfig "emo.csv",
   optSelect = Menu,
   optChoice = return 0,
+  optSilent = False,
   optRandom = False
 }
 
@@ -75,6 +77,10 @@ options =
         "Le numéro de l'émoticône à choisir (démarre à 1). Lorsque cette option\n\
         \est utilisée, le programme sélectionne directement l'émoticône pour\n\
         \l'utilisateur et quitte.",
+      Option "s" []
+        (NoArg (\ opts -> return opts { optSilent = True }))
+        "Mode silencieux. Ne fonctionne qu'en mode ligne de commande (entre\n\
+        \autres avec -c).",
       Option "h" []
         (NoArg (\ opts -> return opts { optRandom = True }))
         "Choix de l'émoticône au hasard.",
