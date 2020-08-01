@@ -45,6 +45,7 @@ main =
   choice <- emojiMenu emojis
 
   copyToClipBoard choice
+  putStrLn emoji
 
   exitSuccess
 
