@@ -140,7 +140,7 @@ handleEvents p = do
         if c == ctrlKey 'y' then when (validChoice s n) $ do
           clearInput
           let i = read s
-          ST.lift $ liftIO $ copyToClipBoard $ snd $ emojis dconf !! (i-1)
+          ST.lift $ liftIO $ copyToClipBoard $ getEmoji (emojis dconf) (i-1)
         -- Quelques touches de readline
         else if c == ctrlKey 'u' then clearInput
         else if c == ctrlKey 'd' then when (x < xmax s) $ do
@@ -231,6 +231,6 @@ emojiMenu esl = runCurses $ do
   chosen_id <- flip evalStateT "" $ flip runReaderT conf $ do
     redrawMenu
     handleInput
-  return $ snd $ esl !! (chosen_id-1)
+  return $ getEmoji esl (chosen_id-1)
 
 --  vim: set sts=2 ts=2 sw=2 tw=120 et :

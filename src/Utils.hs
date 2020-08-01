@@ -3,5 +3,8 @@ module Utils where
 
 type DecodedCsv = [(String, String)]
 
+getEmoji :: DecodedCsv -> Int -> String
+getEmoji emojis = snd . (emojis !!)
+
 --  vim: set sts=2 ts=2 sw=2 tw=120 et :
 

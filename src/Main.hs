@@ -21,9 +21,6 @@ import Display
 import Clip
 import Utils
 
-getEmoji :: DecodedCsv -> Int -> String
-getEmoji emojis = snd . (emojis !!)
-
 selectEmoji :: Opts.Options -> DecodedCsv -> IO String
 selectEmoji opts emojis = do
   let cmdline_choice = fromJust $ Opts.optChoice opts
@@ -59,7 +56,7 @@ main =
     Right es' -> return es'
 
   let emojis = V.toList emojisVector
-  emoji <- if Opts.optRandom opts then getEmoji emojis  <$> randomRIO (1, length emojis - 1)
+  emoji <- if Opts.optRandom opts then getEmoji emojis <$> randomRIO (1, length emojis - 1)
                              else selectEmoji opts emojis
   copyToClipBoard emoji
   unless (Opts.optSilent opts) $ putStrLn emoji
