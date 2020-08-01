@@ -71,12 +71,14 @@ Choix (valeurs entre 1 et 110) ?
 
 Les paquets suivants sont nécessaires à la compilation:
 
-* ` cassava`
+* `unix`
+* `cassava`
+* `random`
 * `ncurses`
 * `utf8-string`
 * `vector`
-* `vector-algorithms`
 * `monad-loops`
+* `mtl`
 * `digits`
 * `process`
 * `directory`
