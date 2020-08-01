@@ -71,20 +71,20 @@ options =
       Option "a" ["aide"]
         (NoArg (\ _ -> showHelp >> exitSuccess))
         "Affiche de l'aide.",
-      Option "c" []
+      Option "c" ["choix"]
         (ReqArg (\ arg opts ->
           return opts { optChoice = readMaybe arg, optSelect = CmdLine }) "NUMÉRO")
         "Le numéro de l'émoticône à choisir (démarre à 1). Lorsque cette option\n\
         \est utilisée, le programme sélectionne directement l'émoticône pour\n\
         \l'utilisateur et quitte.",
-      Option "s" []
+      Option "s" ["silencieux"]
         (NoArg (\ opts -> return opts { optSilent = True }))
         "Mode silencieux. N'affiche rien sur stdout après exécution. Cela ne\n\
         \désactive pas les messages d'erreur.",
-      Option "h" []
+      Option "h" ["hasard"]
         (NoArg (\ opts -> return opts { optRandom = True, optSelect = CmdLine }))
         "Choix de l'émoticône au hasard.",
-      Option "f" []
+      Option "f" ["fichier"]
         (ReqArg (\ arg opts -> return opts { optInfile = return arg }) "FICHIER")
         "Fichier d'entrée contenant les émoticônes."
     ]
