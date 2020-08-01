@@ -82,7 +82,7 @@ options =
         "Mode silencieux. Ne fonctionne qu'en mode ligne de commande (entre\n\
         \autres avec -c).",
       Option "h" []
-        (NoArg (\ opts -> return opts { optRandom = True }))
+        (NoArg (\ opts -> return opts { optRandom = True, optSelect = CmdLine }))
         "Choix de l'émoticône au hasard.",
       Option "f" []
         (ReqArg (\ arg opts -> return opts { optInfile = return arg }) "FICHIER")
