@@ -1,6 +1,7 @@
 
 module Main where
 
+import Data.Maybe
 import Data.Char
 import Data.Csv
 import qualified Data.Vector as V
