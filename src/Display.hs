@@ -86,18 +86,20 @@ validChoice ch_str n = case readMaybe ch_str of
   Just c -> 1 >= c || c <= n
   _      -> False
 
-doBackspace :: String -> StateT String Curses ()
-doBackspace ititle = do
-  istr   <- ST.get
-  win    <- ST.lift defaultWindow
-  (y, x) <- ST.lift $ getCursor win
-  let i          = fromInteger x - length ititle
+doBackspace :: ReaderT DisplayConf (StateT String Curses) ()
+doBackspace = do
+  dconf <- ask
+  istr   <- R.lift ST.get
+  win    <- liftRST defaultWindow
+  (y, x) <- liftRST $ getCursor win
+  let ititle     = inputTitle dconf
+      i          = fromInteger x - length ititle
       x0         = fromIntegral $ length ititle
       (beg, end) = splitAt i istr
       resul      = init beg ++ end
   when (x > x0) $ do
     put resul
-    ST.lift $ updateWindow win $ do
+    liftRST $ updateWindow win $ do
       moveCursor y x0
       clearLine
       drawString resul
@@ -119,11 +121,11 @@ handleEvents p = do
   dconf <- ask
   let x0     = fromIntegral $ length (inputTitle dconf)
       xmax s = x0 + fromIntegral (length s)
-  R.lift $ iterateUntil p $ do
-    win    <- ST.lift defaultWindow
-    jev    <- ST.lift $ getEvent win Nothing
-    (y, x) <- ST.lift $ getCursor win
-    let updateW    = ST.lift . updateWindow win
+  iterateUntil p $ do
+    win    <- liftRST defaultWindow
+    jev    <- liftRST $ getEvent win Nothing
+    (y, x) <- liftRST $ getCursor win
+    let updateW    = liftRST . updateWindow win
         clearInput = updateW (moveCursor y x0 >> clearLine) >> put ""
         moveRight  = do
           s <- ST.get
@@ -131,26 +133,22 @@ handleEvents p = do
         moveLeft = when (x > x0) $ updateW $ moveCursor y (x-1)
     ev  <- case jev of
       Just e@(EventCharacter '\n')           -> return e
-      Just e@(EventSpecialKey KeyLeftArrow)  -> moveLeft  >> return e
-      Just e@(EventSpecialKey KeyRightArrow) -> moveRight >> return e
-      Just e@(EventSpecialKey KeyBackspace)  -> do
-        doBackspace $ inputTitle dconf
-        return e
+      Just e@(EventSpecialKey KeyLeftArrow)  -> moveLeft    >> return e
+      Just e@(EventSpecialKey KeyRightArrow) -> moveRight   >> return e
+      Just e@(EventSpecialKey KeyBackspace)  -> doBackspace >> return e
       Just e@(EventCharacter c) -> do
         s <- ST.get
         let n = fromIntegral $ nChoice dconf
             clearInputAndCopy i = do
               clearInput
-              ST.lift $ liftIO $ copyToClipBoard $ getEmoji (emojis dconf) (i-1)
+              liftRST $ liftIO $ copyToClipBoard $ getEmoji (emojis dconf) (i-1)
         if c == ctrlKey 'y' then when (validChoice s n) $ clearInputAndCopy $ read s
         else if c == ctrlKey 'r' then do
-          i <- ST.lift $ liftIO $ randomRIO (1, length (emojis dconf) - 1)
+          i <- liftRST $ liftIO $ randomRIO (1, length (emojis dconf) - 1)
           clearInputAndCopy i
         -- Quelques touches de readline
         else if c == ctrlKey 'u' then clearInput
-        else if c == ctrlKey 'd' then when (x < xmax s) $ do
-          moveRight
-          doBackspace $ inputTitle dconf
+        else if c == ctrlKey 'd' then when (x < xmax s) $ moveRight >> doBackspace
         else if c == ctrlKey 'b' then moveLeft
         else if c == ctrlKey 'f' then moveRight
         else if c == ctrlKey 'a' then updateW $ moveCursor y x0
@@ -162,7 +160,7 @@ handleEvents p = do
         return e
       Just e -> return e
       _      -> return $ EventUnknown 0
-    ST.lift render
+    liftRST render
     return ev
 
 {-|
