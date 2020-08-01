@@ -70,9 +70,9 @@ options =
       Option "c" []
         (ReqArg (\ arg opts ->
           return opts { optChoice = readMaybe arg, optSelect = CmdLine }) "NUMÉRO")
-        "Le numéro de l'émoticône à choisir (démarre à 1). Lorsque cette option\
-        \ est utilisée, le programme sélectionne directement l'émoticône pour\
-        \ l'utilisateur et quitte.",
+        "Le numéro de l'émoticône à choisir (démarre à 1). Lorsque cette option\n\
+        \est utilisée, le programme sélectionne directement l'émoticône pour\n\
+        \l'utilisateur et quitte.",
       Option "f" []
         (ReqArg (\ arg opts -> return opts { optInfile = return arg }) "FICHIER")
         "Fichier d'entrée contenant les émoticônes."
