@@ -12,6 +12,7 @@ import System.Exit
 import System.Environment
 import System.Console.GetOpt
 import System.Posix.Signals
+import System.Random
 
 import Control.Monad
 
@@ -55,7 +56,8 @@ main =
     Right es' -> return es'
 
   let emojis = V.toList emojisVector
-  emoji <- selectEmoji opts emojis
+  emoji <- if Opts.optRandom opts then snd . (emojis !!) <$> randomRIO (1, length emojis - 1)
+                             else selectEmoji opts emojis
   copyToClipBoard emoji
   putStrLn emoji
 

@@ -22,7 +22,8 @@ data SelectMode = Menu | CmdLine
 data Options = Options {
   optInfile :: IO String,
   optSelect :: SelectMode,
-  optChoice :: Maybe Int
+  optChoice :: Maybe Int,
+  optRandom :: Bool
 }
 
 validateOptions :: Options -> IO Options
@@ -45,7 +46,8 @@ defaultOptions :: Options
 defaultOptions = Options {
   optInfile = getXdgDirectory XdgConfig "emo.csv",
   optSelect = Menu,
-  optChoice = return 0
+  optChoice = return 0,
+  optRandom = False
 }
 
 showHelp :: IO ()
@@ -73,6 +75,9 @@ options =
         "Le numéro de l'émoticône à choisir (démarre à 1). Lorsque cette option\n\
         \est utilisée, le programme sélectionne directement l'émoticône pour\n\
         \l'utilisateur et quitte.",
+      Option "h" []
+        (NoArg (\ opts -> return opts { optRandom = True }))
+        "Choix de l'émoticône au hasard.",
       Option "f" []
         (ReqArg (\ arg opts -> return opts { optInfile = return arg }) "FICHIER")
         "Fichier d'entrée contenant les émoticônes."

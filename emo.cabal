@@ -66,6 +66,7 @@ executable emo
   build-depends:       base >=4.12 && <4.13,
                        unix,
                        cassava,
+                       random,
                        ncurses,
                        utf8-string,
                        vector,
