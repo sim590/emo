@@ -181,6 +181,8 @@ drawBottomInfo infos = do
 
 {-|
    Dessine l'invite d'entrée pour l'utilisateur.
+
+   Hypothèse: le curseur Curses se trouve au niveau de la ligne d'entrée usager.
 -}
 drawInputTitle :: String -> Int -> Int -> Update ()
 drawInputTitle title n mec = do
