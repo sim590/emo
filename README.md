@@ -49,11 +49,21 @@ Choix (valeurs entre 1 et 110) ?
 
 ### Touches
 
-* `CTRL+Y`: copie dans le presse-papier le choix courant fait par l'utilisateur
-  et efface la ligne d'entrée usager.
-* `CTRL+U`: efface la ligne d'entrée usager.
-* `Entrer`: valide le choix, copie celui-ci dans le presse-papier et quitte le
-  programme.
+**Style `readline`**
+
+* CTRL+L: redessine l'écran.
+* CTRL+B: déplace le curseur vers la gauche.
+* CTRL+F: déplace le curseur vers la droite.
+* CTRL+A: déplace le curseur au début de la ligne.
+* CTRL+E: déplace le curseur à la fin de la ligne.
+* CTRL+D: supprime un caractère sous le curseur.
+* Retour arrière: efface un caractère.
+
+**Autres**
+
+* CTRL+Y: efface l'entrée et copie l'emoji associé au choix si l'entrée est valide.
+* CTRL+I: affiche de l'information sur l'emoji.
+* CTRL+R: choix aléatoire d'un emoji et le copie dans la presse-papier.
 
 ### Dépendances
 
