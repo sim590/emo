@@ -109,6 +109,8 @@ doBackspace = do
    Boucle sur les événements du clavier et effectue les actions appropriées.
 
    * CTRL+Y: efface l'entrée et copie l'emoji associé au choix si l'entrée est valide.
+   * CTRL+R: choix aléatoire d'un emoji et le copie dans la presse-papier.
+   * CTRL+L: redessine l'écran.
    * CTRL+B: déplace le curseur vers la gauche.
    * CTRL+F: déplace le curseur vers la droite.
    * CTRL+A: déplace le curseur au début de la ligne.
