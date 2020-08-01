@@ -149,6 +149,7 @@ handleEvents p = do
           i <- liftRST $ liftIO $ randomRIO (1, length (emojis dconf) - 1)
           clearInputAndCopy i
         -- Quelques touches de readline
+        else if c == ctrlKey 'l' then redrawMenu
         else if c == ctrlKey 'u' then clearInput
         else if c == ctrlKey 'd' then when (x < xmax s) $ moveRight >> doBackspace
         else if c == ctrlKey 'b' then moveLeft
