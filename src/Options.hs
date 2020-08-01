@@ -79,8 +79,8 @@ options =
         \l'utilisateur et quitte.",
       Option "s" []
         (NoArg (\ opts -> return opts { optSilent = True }))
-        "Mode silencieux. Ne fonctionne qu'en mode ligne de commande (entre\n\
-        \autres avec -c).",
+        "Mode silencieux. N'affiche rien sur stdout après exécution. Cela ne\n\
+        \désactive pas les messages d'erreur.",
       Option "h" []
         (NoArg (\ opts -> return opts { optRandom = True, optSelect = CmdLine }))
         "Choix de l'émoticône au hasard.",
