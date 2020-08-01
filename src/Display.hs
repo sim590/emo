@@ -18,10 +18,9 @@ import qualified Control.Monad.State as ST
 import Control.Monad.Loops
 
 import Clip
+import Utils
 
 import UI.NCurses
-
-type DecodedCsv = [(String, String)]
 
 data DisplayConf = DisplayConf {
   emojis     :: DecodedCsv,
@@ -111,7 +110,7 @@ doBackspace ititle = do
    * CTRL+F: déplace le curseur vers la droite.
    * CTRL+A: déplace le curseur au début de la ligne.
    * CTRL+E: déplace le curseur à la fin de la ligne.
-   * CTRL+D: supprime une caractère sous le curseur.
+   * CTRL+D: supprime un caractère sous le curseur.Csv
    * Backspace: efface un caractère.
 -}
 handleEvents :: (Event -> Bool) -> ReaderT DisplayConf (StateT String Curses) Event

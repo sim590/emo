@@ -1,5 +1,9 @@
+
 module Options (
   Options (..),
+  SelectMode (..),
+  validateOptions,
+  optChoiceOutOfRangeErrMsg,
   defaultOptions,
   showHelp,
   options
@@ -11,16 +15,37 @@ import System.Exit
 import System.Environment
 import System.Console.GetOpt
 
-newtype Options = Options {
-  optInfile :: IO String
+import Text.Read
+
+data SelectMode = Menu | CmdLine
+
+data Options = Options {
+  optInfile :: IO String,
+  optSelect :: SelectMode,
+  optChoice :: Maybe Int
 }
+
+validateOptions :: Options -> IO Options
+validateOptions opts = do
+  oc <- case optChoice opts of
+    Just c -> return c
+    _      -> hPutStrLn stderr optChoiceNotIntErrMsg >> exitFailure
+  return opts { optChoice = return oc }
+
+optChoiceOutOfRangeErrMsg :: String
+optChoiceOutOfRangeErrMsg = "erreur: le nombre passé à -n est inadmissible."
+
+optChoiceNotIntErrMsg :: String
+optChoiceNotIntErrMsg = "erreur: un entier doit être passé à -n."
 
 programVersion :: Double
 programVersion = 0.1
 
 defaultOptions :: Options
 defaultOptions = Options {
-  optInfile = getXdgDirectory XdgConfig "emo.csv"
+  optInfile = getXdgDirectory XdgConfig "emo.csv",
+  optSelect = Menu,
+  optChoice = return 0
 }
 
 showHelp :: IO ()
@@ -42,6 +67,12 @@ options =
       Option "a" ["aide"]
         (NoArg (\ _ -> showHelp >> exitSuccess))
         "Affiche de l'aide.",
+      Option "c" []
+        (ReqArg (\ arg opts ->
+          return opts { optChoice = readMaybe arg, optSelect = CmdLine }) "NUMÉRO")
+        "Le numéro de l'émoticône à choisir (démarre à 1). Lorsque cette option\
+        \ est utilisée, le programme sélectionne directement l'émoticône pour\
+        \ l'utilisateur et quitte.",
       Option "f" []
         (ReqArg (\ arg opts -> return opts { optInfile = return arg }) "FICHIER")
         "Fichier d'entrée contenant les émoticônes."

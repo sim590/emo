@@ -6,6 +6,7 @@ import Data.Csv
 import qualified Data.Vector as V
 import qualified Data.ByteString.Lazy.UTF8 as BLU
 
+import System.IO
 import System.Exit
 import System.Environment
 import System.Console.GetOpt
@@ -16,6 +17,18 @@ import Control.Monad
 import qualified Options as Opts
 import Display
 import Clip
+import Utils
+
+selectEmoji :: Opts.Options -> DecodedCsv -> IO String
+selectEmoji opts emojis = do
+  let cmdline_choice = fromJust $ Opts.optChoice opts
+  case Opts.optSelect opts of
+    Opts.CmdLine -> do
+      when (length emojis <= cmdline_choice || cmdline_choice <= 0) $ do
+        hPutStrLn stderr Opts.optChoiceOutOfRangeErrMsg
+        exitFailure
+      return $ snd $ emojis !! cmdline_choice
+    Opts.Menu -> emojiMenu emojis
 
 main :: IO ()
 main =
@@ -27,7 +40,7 @@ main =
   --  Analyse des arguments
   args <- getArgs
   let (actions, _, errors) = getOpt RequireOrder Opts.options args
-  opts <- foldl (>>=) (return Opts.defaultOptions) actions
+  opts <- foldl (>>=) (return Opts.defaultOptions) actions >>= Opts.validateOptions
   unless (null errors) $ mapM_ putStr errors >> Opts.showHelp >> exitFailure
 
   -- Décodage du fichier CSV
@@ -40,11 +53,9 @@ main =
       exitFailure
     Right es' -> return es'
 
-  -- Choix de l'emoji par le menu
   let emojis = V.toList emojisVector
-  choice <- emojiMenu emojis
-
-  copyToClipBoard choice
+  emoji <- selectEmoji opts emojis
+  copyToClipBoard emoji
   putStrLn emoji
 
   exitSuccess
