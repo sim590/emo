@@ -105,14 +105,15 @@ showHelp = do
       pHeight      = min h $ fromIntegral (length keyMapsHelpText) + 3
       padY         = div (h - pHeight) 2
       padX         = div (w - pWidth) 2
-  thisNewPad <- ST.lift $ newPad pHeight pWidth
   mOldPad    <- use helpPad
-  helpPad    .= Just (fromMaybe thisNewPad mOldPad)
-  jhpad      <- use helpPad
+  jpad <- case mOldPad of
+    jop@(Just _) -> return jop
+    _            -> ST.lift $ Just <$> newPad pHeight pWidth
+  helpPad .= jpad
   let osWidth len = div (fromInteger pWidth - len) 2
       centered s  = replicate (osWidth $ length s) ' ' ++ s
       header      = centered "Aide-mémoire" ++ "\n"
-      hpad        = fromJust jhpad
+      hpad        = fromJust jpad
   ST.lift $ updatePad hpad 0 0 padY padX h w $ do
     clear
     drawString "\n"       -- passer première ligne pour la bordure ...
