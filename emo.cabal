@@ -78,6 +78,7 @@ executable emo
                        mtl,
                        digits,
                        process,
+                       lens,
                        directory
 
   -- Directories containing source files.

@@ -61,6 +61,7 @@ Choix (valeurs entre 1 et 110) ?
 
 **Autres**
 
+* `CTRL+H`: affiche un texte d'aide directement durant l'exécution du programme.
 * `CTRL+Y`: efface l'entrée et copie l'emoji associé au choix si l'entrée est valide.
 * `CTRL+I`: affiche de l'information sur l'emoji.
 * `CTRL+R`: choix aléatoire d'un emoji et le copie dans la presse-papier.

@@ -1,4 +1,6 @@
 
+{-# LANGUAGE TemplateHaskell #-}
+
 module Display (
   emojiMenu
 ) where
@@ -6,6 +8,7 @@ module Display (
 import Data.List
 import Data.Digits
 import Data.Char
+import Data.Maybe
 
 import Text.Read
 
@@ -16,6 +19,8 @@ import qualified Control.Monad.Reader as R
 import qualified Control.Monad.State as ST
 import Control.Monad.Loops
 
+import Control.Lens
+
 import System.Random
 
 import Clip
@@ -23,13 +28,18 @@ import Utils
 
 import UI.NCurses
 
+data DisplayState = DisplayState { _helpPad     :: Maybe Pad
+                                 , _inputString :: String
+                                 }
+makeLenses ''DisplayState
+
 data DisplayConf = DisplayConf {
   emojis     :: DecodedCsv,
   nChoice    :: Int,
   inputTitle :: String
 }
 
-liftRST :: Curses a -> ReaderT DisplayConf (StateT String Curses) a
+liftRST :: Curses a -> ReaderT DisplayConf (StateT DisplayState Curses) a
 liftRST = R.lift . ST.lift
 
 colOs :: Integer
@@ -75,6 +85,42 @@ maxColWidth winWmax es = min winWmax (eWmax es)
 maxEntryCount :: Integer -> Integer -> [(String, String)] -> Int
 maxEntryCount w h es = fromInteger $ (h-3) * maxColCount w es
 
+{-| Affiche une chaîne de caractère avec un attribut donné.
+-}
+drawStringWithAttr :: Attribute -> String -> Update ()
+drawStringWithAttr attr s = setAttribute attr True >> drawString s >> setAttribute attr False
+
+{-| Affiche du texte en caractères gras.
+-}
+drawBoldString :: String -> Update ()
+drawBoldString = drawStringWithAttr AttributeBold
+
+{-| Affiche le texte d'aide, c.-à-d. l'aide-mémoire des touches.
+-}
+showHelp :: StateT DisplayState Curses ()
+showHelp = do
+  (h, w) <- ST.lift screenSize
+  let biggestWidth = maximum (map length keyMapsHelpText)
+      pWidth       = min w $ fromIntegral biggestWidth + 4
+      pHeight      = min h $ fromIntegral (length keyMapsHelpText) + 3
+      padY         = div (h - pHeight) 2
+      padX         = div (w - pWidth) 2
+  thisNewPad <- ST.lift $ newPad pHeight pWidth
+  mOldPad    <- use helpPad
+  helpPad    .= Just (fromMaybe thisNewPad mOldPad)
+  jhpad      <- use helpPad
+  let osWidth len = div (fromInteger pWidth - len) 2
+      centered s  = replicate (osWidth $ length s) ' ' ++ s
+      header      = centered "Aide-mémoire" ++ "\n"
+      hpad        = fromJust jhpad
+  ST.lift $ updatePad hpad 0 0 padY padX h w $ do
+    clear
+    drawString "\n"       -- passer première ligne pour la bordure ...
+    drawBoldString header
+  ST.lift $ updatePad hpad 0 0 padY padX h w $ forM_ keyMapsHelpText $ \ l ->
+    drawString $ replicate (osWidth biggestWidth) ' ' ++ l ++ "\n"
+  ST.lift $ updatePad hpad 0 0 padY padX h w $ drawBox Nothing Nothing
+
 {-| Affiche les choix d'emojis à l'écran.
 -}
 writeChoices :: DecodedCsv -> Update ()
@@ -104,10 +150,10 @@ validChoice ch_str n = case readMaybe ch_str of
 {-| Effectue une suppression d'un caractère à gauche du cruseur lorsque le
    celui-ci se trouve sur la ligne d'entrée usager.
 -}
-doBackspace :: ReaderT DisplayConf (StateT String Curses) ()
+doBackspace :: ReaderT DisplayConf (StateT DisplayState Curses) ()
 doBackspace = do
   dconf <- ask
-  istr   <- R.lift ST.get
+  istr  <- R.lift $ use inputString
   win    <- liftRST defaultWindow
   (y, x) <- liftRST $ getCursor win
   let ititle     = inputTitle dconf
@@ -116,7 +162,7 @@ doBackspace = do
       (beg, end) = splitAt i istr
       resul      = init beg ++ end
   when (x > x0) $ do
-    put resul
+    R.lift $ inputString .= resul
     liftRST $ updateWindow win $ do
       moveCursor y x0
       clearLine
@@ -125,6 +171,7 @@ doBackspace = do
 
 {-| Boucle sur les événements du clavier et effectue les actions appropriées.
 
+   * CTRL+H: affiche un texte d'aide.
    * CTRL+Y: efface l'entrée et copie l'emoji associé au choix si l'entrée est valide.
    * CTRL+I: affiche de l'information sur l'emoji.
    * CTRL+R: choix aléatoire d'un emoji et le copie dans la presse-papier.
@@ -136,7 +183,7 @@ doBackspace = do
    * CTRL+D: supprime un caractère sous le curseur.
    * Backspace: efface un caractère.
 -}
-handleEvents :: (Event -> Bool) -> ReaderT DisplayConf (StateT String Curses) Event
+handleEvents :: (Event -> Bool) -> ReaderT DisplayConf (StateT DisplayState Curses) Event
 handleEvents p = do
   dconf <- ask
   let x0     = fromIntegral $ length (inputTitle dconf)
@@ -146,9 +193,9 @@ handleEvents p = do
     jev    <- liftRST $ getEvent win Nothing
     (y, x) <- liftRST $ getCursor win
     let updateW    = liftRST . updateWindow win
-        clearInput = updateW (moveCursor y x0 >> clearLine) >> put ""
+        clearInput = updateW (moveCursor y x0 >> clearLine) >> inputString .= ""
         moveRight  = do
-          s <- ST.get
+          s <- use inputString
           when (x < xmax s) $ updateW $ moveCursor y (x+1)
         moveLeft = when (x > x0) $ updateW $ moveCursor y (x-1)
     ev  <- case jev of
@@ -157,7 +204,7 @@ handleEvents p = do
       Just e@(EventSpecialKey KeyRightArrow) -> moveRight   >> return e
       Just e@(EventSpecialKey KeyBackspace)  -> doBackspace >> return e
       Just e@(EventCharacter c) -> do
-        s <- ST.get
+        s <- use inputString
         let n = fromIntegral $ nChoice dconf
             emoji i         = getEmoji (emojis dconf) (i-1)
             emojiInfo i     = getEmojiInfo (emojis dconf) (i-1)
@@ -167,6 +214,7 @@ handleEvents p = do
               liftRST $ liftIO $ copyToClipBoard $ emoji i
               updateW $ drawBottomInfo $ emojiPlusInfo i ++ " copié dans le presse-papier..."
         if      c == ctrlKey 'y' then when (validChoice s n) $ clearInputAndCopy $ read s
+        else if c == ctrlKey 'h' then R.lift showHelp
         else if c == ctrlKey 'i' then when (validChoice s n) $ do
           let i = read s
           updateW $ drawBottomInfo $ emojiPlusInfo i
@@ -184,7 +232,7 @@ handleEvents p = do
         -- On affiche tout autre caractère à la ligne.
         else do
           updateW $ drawString [c]
-          put $ s ++ [c]
+          inputString .= s ++ [c]
         return e
       Just e -> return e
       _      -> return $ EventUnknown 0
@@ -224,11 +272,11 @@ drawInputTitle title n mec = do
 
    Cette fonction est normalement appelée lorsque le terminal est redimensionné.
 -}
-redrawMenu :: ReaderT DisplayConf (StateT String Curses) ()
+redrawMenu :: ReaderT DisplayConf (StateT DisplayState Curses) ()
 redrawMenu = do
   dconf <- ask
   win   <- liftRST defaultWindow
-  inputstr <- R.lift ST.get
+  inputstr <- R.lift $ use inputString
   liftRST $ updateWindow win $ do
     clear
     (h, w) <- windowSize
@@ -245,7 +293,7 @@ redrawMenu = do
 
 {-| Boucle sur les caractères et événements envoyés par l'utilisateur.
 -}
-handleInput :: ReaderT DisplayConf (StateT String Curses) Int
+handleInput :: ReaderT DisplayConf (StateT DisplayState Curses) Int
 handleInput = do
   dconf <- ask
   let userReadyOrResize event = or $ (event ==) <$> [
@@ -255,7 +303,7 @@ handleInput = do
       n = fromIntegral $ nChoice dconf
   s <- iterateWhile (not . flip validChoice n) $ do
     ev <- handleEvents userReadyOrResize
-    pchoice <- R.lift ST.get
+    pchoice <- R.lift $ use inputString
     if ev == EventResized then redrawMenu >> return ""
                           else return pchoice
   return $ read s
@@ -270,7 +318,7 @@ emojiMenu esl = runCurses $ do
   let title = "Choix (valeurs entre 1 et "++ show (length esl) ++ ") ? "
       conf  = DisplayConf esl (length esl) title
 
-  chosen_id <- flip evalStateT "" $ flip runReaderT conf $ do
+  chosen_id <- flip evalStateT (DisplayState Nothing "") $ flip runReaderT conf $ do
     redrawMenu
     handleInput
   return $ getEmoji esl (chosen_id-1)
