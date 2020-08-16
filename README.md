@@ -91,7 +91,8 @@ Les paquets suivants sont nécessaires à la compilation:
 
 **Système**
 
-`xclip`: permet d'interagir avec le presse-papier du système.
+* `xclip`: permet d'interagir avec le presse-papier du système.
+* `fzf` (optionnel): permet de filtrer la liste des émoticônes.
 
 ### Compilation
 
