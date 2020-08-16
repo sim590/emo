@@ -62,6 +62,7 @@ executable emo
                        Display,
                        Utils,
                        Csv,
+                       Fzf,
                        Clip
 
   -- LANGUAGE extensions used by modules in this package.
@@ -77,6 +78,7 @@ executable emo
                        utf8-string,
                        vector,
                        monad-loops,
+                       transformers,
                        mtl,
                        digits,
                        process,

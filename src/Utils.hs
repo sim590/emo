@@ -27,6 +27,7 @@ keyMapsHelpText = [
                    "CTRL+H:    affiche ce texte d'aide."
                  , "CTRL+Y:    efface l'entrée et copie l'emoji associé au choix si l'entrée est valide."
                  , "CTRL+I:    affiche de l'information sur l'emoji."
+                 , "CTRL+T:    filtre tous les emojis à l'aide de fzf."
                  , "CTRL+R:    choix aléatoire d'un emoji et le copie dans la presse-papier."
                  , "CTRL+L:    redessine l'écran."
                  , "CTRL+B:    déplace le curseur vers la gauche."
