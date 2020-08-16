@@ -73,6 +73,7 @@ executable emo
                        unix,
                        cassava,
                        random,
+                       mmorph,
                        ncurses,
                        bytestring,
                        utf8-string,

@@ -13,6 +13,7 @@ import Data.Maybe
 import Text.Read
 
 import Control.Monad
+import Control.Monad.Morph
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Trans.Maybe
@@ -122,14 +123,12 @@ showHelp = do
     drawString $ replicate (osWidth biggestWidth) ' ' ++ l ++ "\n"
   ST.lift $ updatePad hpad 0 0 padY padX h w $ drawBox Nothing Nothing
 
-filterEmojis :: DecodedCsv -> StateT DisplayState Curses ()
+filterEmojis :: DecodedCsv -> MaybeT (StateT DisplayState Curses) DecodedCsv
 filterEmojis all_emojis = do
-  m_filtered_emojis <- liftIO $ runMaybeT $ fzf all_emojis
-  let next_emojis = case m_filtered_emojis of
-                      Just es -> es
-                      _       -> all_emojis
+  next_emojis <- hoist liftIO $ fzf all_emojis
   emojis .= next_emojis
   prompt .= displayPrompt (length next_emojis)
+  return next_emojis
 
 {-| Affiche les choix d'emojis à l'écran.
 -}
@@ -227,7 +226,10 @@ handleEvents p = do
               updateW $ drawBottomInfo $ emojiPlusInfo i ++ " copié dans le presse-papier..."
         if      c == ctrlKey 'y' then when (validChoice s n) $ clearInputAndCopy $ read s
         else if c == ctrlKey 'h' then showHelp
-        else if c == ctrlKey 't' then filterEmojis all_emojis >> redrawMenu
+        else if c == ctrlKey 't' then do
+          mfzfed_emojis <- runMaybeT $ filterEmojis all_emojis
+          redrawMenu
+          when (isNothing mfzfed_emojis) $ updateW $ drawBottomInfo "erreur: fzf est introuvable..."
         else if c == ctrlKey 'i' then when (validChoice s n) $ do
           let i = read s
           updateW $ drawBottomInfo $ emojiPlusInfo i
