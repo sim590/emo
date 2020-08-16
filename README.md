@@ -65,6 +65,7 @@ Choix (valeurs entre 1 et 110) ?
 * `CTRL+Y`: efface l'entrée et copie l'emoji associé au choix si l'entrée est valide.
 * `CTRL+I`: affiche de l'information sur l'emoji.
 * `CTRL+R`: choix aléatoire d'un emoji et le copie dans la presse-papier.
+* `CTRL+T`: filtre les emojis avec fzf.
 
 ### Dépendances
 
