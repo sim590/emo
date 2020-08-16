@@ -2,10 +2,6 @@
 module Main where
 
 import Data.Maybe
-import Data.Char
-import Data.Csv
-import qualified Data.Vector as V
-import qualified Data.ByteString.Lazy.UTF8 as BLU
 
 import System.IO
 import System.Exit
@@ -17,6 +13,7 @@ import System.Random
 import Control.Monad
 
 import qualified Options as Opts
+import qualified Csv
 import Display
 import Clip
 import Utils
@@ -28,7 +25,7 @@ import Utils
      directement.
    * Sinon, le menu interactif est affiché à l'utilisateur.
 -}
-selectEmoji :: Opts.Options -> DecodedCsv -> IO String
+selectEmoji :: Opts.Options -> Csv.DecodedCsv -> IO String
 selectEmoji opts emojis = do
   let cmdline_choice = fromJust $ Opts.optChoice opts
   case Opts.optSelect opts of
@@ -56,16 +53,14 @@ main =
   unless (null errors) $ mapM_ putStr errors >> Opts.showHelp >> exitFailure
 
   -- Décodage du fichier CSV
-  let myDecodeOptions = defaultDecodeOptions { decDelimiter = fromIntegral (ord ':') }
   inFile <- Opts.optInfile opts
   csv    <- readFile inFile
-  emojisVector <- case decodeWith myDecodeOptions NoHeader (BLU.fromString csv) of
-    Left err -> do
-      putStrLn err
-      exitFailure
-    Right es' -> return es'
+  emojis <- case Csv.decode csv of
+              Left err -> do
+                putStrLn err
+                exitFailure
+              Right es' -> return es'
 
-  let emojis = V.toList emojisVector
   emoji <- if Opts.optRandom opts then getEmoji emojis <$> randomRIO (1, length emojis - 1)
                              else selectEmoji opts emojis
   copyToClipBoard emoji

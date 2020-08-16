@@ -4,10 +4,7 @@ module Utils where
 import Control.Monad.State
 import Control.Monad.Reader
 
-{-|
-   Format d'un fichier CSV d'emo décodé.
--}
-type DecodedCsv = [(String, String)]
+import Csv (DecodedCsv)
 
 {-|
    Sélectionne l'emoji dans la liste des données décodées par l'analyseur du

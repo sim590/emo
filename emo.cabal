@@ -61,6 +61,7 @@ executable emo
   other-modules:       Options,
                        Display,
                        Utils,
+                       Csv,
                        Clip
 
   -- LANGUAGE extensions used by modules in this package.
@@ -72,6 +73,7 @@ executable emo
                        cassava,
                        random,
                        ncurses,
+                       bytestring,
                        utf8-string,
                        vector,
                        monad-loops,
