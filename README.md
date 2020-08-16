@@ -76,13 +76,17 @@ Les paquets suivants sont nécessaires à la compilation:
 * `unix`
 * `cassava`
 * `random`
+* `mmorph`
 * `ncurses`
+* `bytestring`
 * `utf8-string`
 * `vector`
 * `monad-loops`
+* `transformers`
 * `mtl`
 * `digits`
 * `process`
+* `lens`
 * `directory`
 
 **Système**
