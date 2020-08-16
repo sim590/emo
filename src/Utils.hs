@@ -1,6 +1,9 @@
 
 module Utils where
 
+import Control.Monad.State
+import Control.Monad.Reader
+
 {-|
    Format d'un fichier CSV d'emo décodé.
 -}
@@ -36,6 +39,9 @@ keyMapsHelpText = [
                  , "CTRL+D:    supprime un caractère sous le curseur."
                  , "Backspace: efface un caractère."
                  ]
+
+liftRST :: Monad m => m a -> ReaderT r (StateT s m) a
+liftRST = Control.Monad.Reader.lift . Control.Monad.State.lift
 
 --  vim: set sts=2 ts=2 sw=2 tw=120 et :
 

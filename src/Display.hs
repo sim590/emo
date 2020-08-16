@@ -39,9 +39,6 @@ data DisplayConf = DisplayConf {
   inputTitle :: String
 }
 
-liftRST :: Curses a -> ReaderT DisplayConf (StateT DisplayState Curses) a
-liftRST = R.lift . ST.lift
-
 colOs :: Integer
 colOs = 2
 
