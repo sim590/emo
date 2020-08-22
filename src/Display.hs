@@ -264,7 +264,7 @@ drawBottomInfo infos = do
   (y, x) <- cursorPosition
   moveCursor (y+1) 0
   clearLine
-  drawString $ "`--> " ++ infos
+  unless (null infos) $ drawString $ "`--> " ++ infos
   moveCursor y x
 
 {-| Dessine l'invite d'entrée pour l'utilisateur.
