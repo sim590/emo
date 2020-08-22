@@ -61,6 +61,8 @@ Choix (valeurs entre 1 et 110) ?
 
 **Autres**
 
+* `CTRL+P` / flèche haut: remonte l'historique
+* `CTRL+N` / flèche bas: redescend l'historique
 * `CTRL+H`: affiche un texte d'aide directement durant l'exécution du programme.
 * `CTRL+Y`: efface l'entrée et copie l'emoji associé au choix si l'entrée est valide.
 * `CTRL+I`: affiche de l'information sur l'emoji.
