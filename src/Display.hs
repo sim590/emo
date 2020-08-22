@@ -334,8 +334,6 @@ emojiMenu init_emojis = runCurses $ do
   (chosen_id, dstate) <- flip runStateT istate $ flip runReaderT init_emojis $ do
     R.lift redrawMenu
     handleInput
-  -- let elist = emojis state
-  --     cid =
   return $ getEmoji (dstate ^. emojis) (chosen_id-1)
 
 --  vim: set sts=2 ts=2 sw=2 tw=120 et :
