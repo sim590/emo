@@ -226,8 +226,8 @@ resetPrompt  = do
    * CTRL+P / flèche haut: remonte l'historique
    * CTRL+N / flèche bas: redescend l'historique
    * CTRL+L: redessine l'écran.
-   * CTRL+B: déplace le curseur vers la gauche.
-   * CTRL+F: déplace le curseur vers la droite.
+   * CTRL+B / flèche gauche: déplace le curseur vers la gauche.
+   * CTRL+F / flèche droite: déplace le curseur vers la droite.
    * CTRL+A: déplace le curseur au début de la ligne.
    * CTRL+E: déplace le curseur à la fin de la ligne.
    * CTRL+D: supprime un caractère sous le curseur.
