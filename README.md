@@ -52,8 +52,10 @@ Choix (valeurs entre 1 et 110) ?
 **Style `readline`**
 
 * `CTRL+L`: redessine l'écran.
-* `CTRL+B`: déplace le curseur vers la gauche.
-* `CTRL+F`: déplace le curseur vers la droite.
+* `CTRL+P` / flèche haut: remonte l'historique
+* `CTRL+N` / flèche bas: redescend l'historique
+* `CTRL+B` / flèche gauche: déplace le curseur vers la gauche.
+* `CTRL+F` / flèche droite: déplace le curseur vers la droite.
 * `CTRL+A`: déplace le curseur au début de la ligne.
 * `CTRL+E`: déplace le curseur à la fin de la ligne.
 * `CTRL+D`: supprime un caractère sous le curseur.
@@ -61,8 +63,6 @@ Choix (valeurs entre 1 et 110) ?
 
 **Autres**
 
-* `CTRL+P` / flèche haut: remonte l'historique
-* `CTRL+N` / flèche bas: redescend l'historique
 * `CTRL+H`: affiche un texte d'aide directement durant l'exécution du programme.
 * `CTRL+Y`: efface l'entrée et copie l'emoji associé au choix si l'entrée est valide.
 * `CTRL+I`: affiche de l'information sur l'emoji.
