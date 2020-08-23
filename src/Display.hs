@@ -272,7 +272,8 @@ handleEvents p = do
       Just e@(EventSpecialKey KeyDownArrow)  -> goInHistory "down" >> return e
       Just e@(EventCharacter c) -> do
         s <- use $ prompt.inputString
-        let clearInputAndCopy i = when (validChoice (show i) n) $ do
+        let clearInputAndCopy s = when (validChoice s n) $ do
+              let i = read s
               clearInput
               ST.lift $ liftIO $ copyToClipBoard $ emoji i
               updateW $ drawBottomInfo $ emojiPlusInfo i ++ " copié dans le presse-papier..."
@@ -280,7 +281,7 @@ handleEvents p = do
               when (validChoice s n) $ prompt.history %= (\ hist ->
                   s : (if length hist >= maxHistorySize then init hist else hist)
                 )
-        if      c == ctrlKey 'y' then clearInputAndCopy $ read s
+        if      c == ctrlKey 'y' then clearInputAndCopy s
         else if c == ctrlKey 'h' then showHelp
         else if c == ctrlKey 't' then do
           mfzfed_emojis <- runMaybeT $ filterEmojis all_emojis
@@ -291,7 +292,7 @@ handleEvents p = do
           updateW $ drawBottomInfo $ emojiPlusInfo i
         else if c == ctrlKey 'r' then do
           i <- ST.lift $ liftIO $ randomRIO (1, length the_emojis - 1)
-          clearInputAndCopy i
+          clearInputAndCopy (show i)
         -- Quelques touches de readline
         else if c == ctrlKey 'p' then goInHistory "up"
         else if c == ctrlKey 'n' then goInHistory "down"
