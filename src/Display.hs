@@ -192,25 +192,25 @@ goUpInHistory :: StateT DisplayState Curses ()
 goUpInHistory = do
   hist <- use $ prompt.history
   unless (null hist) $ do
-    i  <- use $ prompt.idx
-    i' <- prompt.idx <.= min (length hist - 1) (i+1)
-    if i == 0 then do
-      s <- use $ prompt.inputString
-      prompt.inputString .= hist !! i
-      prompt.history .= s : hist
-    else when (i>0) $ prompt.inputString .= hist !! i'
+    i     <- use $ prompt.idx
+    s     <- use $ prompt.inputString
+    hist' <- if i == 0 then prompt.history <.= s : hist
+                       else return hist
+    i'    <- prompt.idx <.= min (length hist' - 1) (i+1)
+    prompt.inputString .= hist' !! i'
 
 {-| Ramène le prochain élément plus récent dans l'historique.
 -}
 goDownInHistory :: StateT DisplayState Curses ()
 goDownInHistory = do
   hist <- use $ prompt.history
-  i    <- use $ prompt.idx
-  i'   <- prompt.idx <.= max 0 (i-1)
-  if i == 1 then do
-    prompt.history %= tail
-    prompt.inputString .= head hist
-  else when (i>1) $ prompt.inputString .= hist !! i'
+  unless (null hist) $ do
+    i    <- use $ prompt.idx
+    i'   <- prompt.idx <.= max 0 (i-1)
+    if i == 1 then do
+      prompt.history     %= tail
+      prompt.inputString .= head hist
+    else when (i>1) $ prompt.inputString .= hist !! i'
 
 resetPrompt :: StateT DisplayState Curses ()
 resetPrompt  = do
