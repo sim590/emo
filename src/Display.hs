@@ -1,5 +1,6 @@
 
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Display (
   emojiMenu
@@ -10,7 +11,10 @@ import Data.Digits
 import Data.Char
 import Data.Maybe
 
-import Text.Read
+import Data.Text (Text, append, pack)
+import qualified Data.Text as T
+
+import Data.Text.Read
 
 import Control.Monad
 import Control.Monad.Morph
@@ -33,10 +37,10 @@ import Csv (DecodedCsv)
 
 import UI.NCurses
 
-data Prompt = Prompt { _prefix      :: String
-                     , _inputString :: String
+data Prompt = Prompt { _prefix      :: Text
+                     , _inputText   :: Text
                      , _idx         :: Int
-                     , _history     :: [String]
+                     , _history     :: [Text]
                      }
 
 data DisplayState = DisplayState { _helpPad :: Maybe Pad
@@ -60,77 +64,78 @@ ctrlKey c = chr (ord c - 96)
 
 {-| Message s'affichant lorsque la liste des choix est tronquée.
 -}
-truncatedMsg :: String
+truncatedMsg :: Text
 truncatedMsg = "// Certains choix ont été tronqués ... //"
 
-displayPrompt :: Int -> String
-displayPrompt len = "Choix (valeurs entre 1 et "++ show len ++ ") ? "
+displayPrompt :: Int -> Text
+displayPrompt len = "Choix (valeurs entre 1 et " `append` pack (show len) `append` ") ? "
 
 {-| Le nombre maximal de colonnes.
 -}
-maxColCount :: Integer -> [(String, String)] -> Integer
+maxColCount :: Integer -> DecodedCsv -> Integer
 maxColCount w es = w `div` spacedColWidth w es
 
 {-| Largeur maximal d'un index considérant le nombre maximal d'indexes.
 -}
-maxIWidth :: [(String, String)] -> Integer
+maxIWidth :: DecodedCsv -> Integer
 maxIWidth es = fromIntegral $ length $ digits 10 $ length es
 
 {-| Largeur d'une colonne en considérant la largeur maximale d'une colonne, la
    largeur maximal de l'index et les espaces blancs pour alignement des indexes.
 -}
-spacedColWidth :: Integer -> [(String, String)] -> Integer
+spacedColWidth :: Integer -> DecodedCsv -> Integer
 spacedColWidth w es = maxColWidth w es + maxIWidth es + colOs
 
 {-| La largeur maximale d'une colonne considérant la largeur de chacun des
    emojis.
 -}
-maxColWidth :: Integer -> [(String, String)] -> Integer
+maxColWidth :: Integer -> DecodedCsv -> Integer
 maxColWidth winWmax es = min winWmax (eWmax es)
-  where comprule (_, e1) (_, e2) = compare (length e1) (length e2)
-        eWmax = fromIntegral . length . snd . maximumBy comprule
+  where comprule (_, e1) (_, e2) = compare (T.length e1) (T.length e2)
+        eWmax = fromIntegral . T.length . snd . maximumBy comprule
 
 {-| Le nombre maximal d'emoji pouvant s'afficher sur l'écran.
 -}
-maxEntryCount :: Integer -> Integer -> [(String, String)] -> Int
+maxEntryCount :: Integer -> Integer -> DecodedCsv -> Int
 maxEntryCount w h es = fromInteger $ (h-3) * maxColCount w es
 
 {-| Affiche une chaîne de caractère avec un attribut donné.
 -}
-drawStringWithAttr :: Attribute -> String -> Update ()
-drawStringWithAttr attr s = setAttribute attr True >> drawString s >> setAttribute attr False
+drawTextWithAttr :: Attribute -> Text -> Update ()
+drawTextWithAttr attr t = setAttribute attr True >> drawText t >> setAttribute attr False
 
 {-| Affiche du texte en caractères gras.
 -}
-drawBoldString :: String -> Update ()
-drawBoldString = drawStringWithAttr AttributeBold
+drawBoldText :: Text -> Update ()
+drawBoldText = drawTextWithAttr AttributeBold
 
 {-| Affiche le texte d'aide, c.-à-d. l'aide-mémoire des touches.
 -}
 showHelp :: StateT DisplayState Curses ()
 showHelp = do
   (h, w) <- ST.lift screenSize
-  let biggestWidth = maximum (map length keyMapsHelpText)
+  let biggestWidth = maximum (map T.length keyMapsHelpText)
       pWidth       = min w $ fromIntegral biggestWidth + 4
       pHeight      = min h $ fromIntegral (length keyMapsHelpText) + 3
       padY         = div (h - pHeight) 2
       padX         = div (w - pWidth) 2
-  mOldPad    <- use helpPad
-  jpad <- case mOldPad of
-    jop@(Just _) -> return jop
-    _            -> ST.lift $ Just <$> newPad pHeight pWidth
-  helpPad .= jpad
-  let osWidth len = div (fromInteger pWidth - len) 2
-      centered s  = replicate (osWidth $ length s) ' ' ++ s
-      header      = centered "Aide-mémoire" ++ "\n"
-      hpad        = fromJust jpad
-  ST.lift $ updatePad hpad 0 0 padY padX h w $ do
-    clear
-    drawString "\n"       -- passer première ligne pour la bordure ...
-    drawBoldString header
-  ST.lift $ updatePad hpad 0 0 padY padX h w $ forM_ keyMapsHelpText $ \ l ->
-    drawString $ replicate (osWidth biggestWidth) ' ' ++ l ++ "\n"
-  ST.lift $ updatePad hpad 0 0 padY padX h w $ drawBox Nothing Nothing
+  when (fromInteger w > pWidth && fromInteger h > pHeight) $ do
+    mOldPad <- use helpPad
+    jpad    <- case mOldPad of
+      jop@(Just _) -> return jop
+      _            -> ST.lift $ Just <$> newPad pHeight pWidth
+    helpPad .= jpad
+    let osWidth len = div (fromInteger pWidth - len) 2
+        centered s  = pack (replicate (osWidth $ T.length s) ' ') `append` s
+        header      = centered "Aide-mémoire" `append` "\n"
+        hpad        = fromJust jpad
+    ST.lift $ updatePad hpad 0 0 padY padX h w $ do
+      clear
+      drawText "\n"       -- passer première ligne pour la bordure ...
+      drawBoldText header
+    ST.lift $ updatePad hpad 0 0 padY padX h w $ forM_ keyMapsHelpText $ \ l ->
+      drawText $ T.replicate (osWidth biggestWidth) " " `append` l `append` "\n"
+    ST.lift $ updatePad hpad 0 0 padY padX h w $ drawBox Nothing Nothing
 
 filterEmojis :: DecodedCsv -> MaybeT (StateT DisplayState Curses) DecodedCsv
 filterEmojis all_emojis = do
@@ -149,7 +154,7 @@ writeChoices es = do
       drawIthEmoji i (_, e) = do
         let (y, x) = (i `div` mcc, (i `mod` mcc) * (scw + colOs))
         moveCursor y x
-        drawString $ show (i+1) ++ ") " ++ e
+        drawText $ pack (show (i+1)) `append` pack ") " `append` e
         return $ i + 1
   foldM_ drawIthEmoji 0 $ take (maxEntryCount w h es) es
   (y, _) <- cursorPosition
@@ -160,9 +165,9 @@ writeChoices es = do
    * ch_str: (String) le choix.
    * n: (Integer) le nombre de choix totaux.
 -}
-validChoice :: String -> Integer -> Bool
-validChoice ch_str n = case readMaybe ch_str of
-  Just c -> 1 >= c || c <= n
+validChoice :: Text -> Integer -> Bool
+validChoice ch_str n = case decimal ch_str of
+  Right (c, _) -> 1 >= c || c <= n
   _      -> False
 
 {-| Effectue une suppression d'un caractère à gauche du cruseur lorsque le
@@ -170,16 +175,17 @@ validChoice ch_str n = case readMaybe ch_str of
 -}
 doBackspace :: StateT DisplayState Curses ()
 doBackspace = do
+  (_, w) <- ST.lift screenSize
   promptp <- use $ prompt.prefix
-  istr       <- use $ prompt.inputString
-  win        <- ST.lift defaultWindow
-  (y, x)     <- ST.lift $ getCursor win
-  let i          = fromInteger x - length promptp
-      x0         = fromIntegral $ length promptp
-      (beg, end) = splitAt i istr
-      resul      = init beg ++ end
+  istr    <- use $ prompt.inputText
+  win     <- ST.lift defaultWindow
+  (y, x)  <- ST.lift $ getCursor win
+  let i          = fromInteger x - T.length promptp
+      x0         = fromIntegral $ T.length promptp
+      (beg, end) = T.splitAt i istr
+      resul      = T.init beg `append` end
   when (x > x0) $ do
-    prompt.inputString .= resul
+    prompt.inputText .= resul
     ST.lift $ updateWindow win $ do
       moveCursor y x0
       clearLine
@@ -193,11 +199,11 @@ goUpInHistory = do
   hist <- use $ prompt.history
   unless (null hist) $ do
     i     <- use $ prompt.idx
-    s     <- use $ prompt.inputString
+    s     <- use $ prompt.inputText
     hist' <- if i == 0 then prompt.history <.= s : hist
                        else return hist
     i'    <- prompt.idx <.= min (length hist' - 1) (i+1)
-    prompt.inputString .= hist' !! i'
+    prompt.inputText .= hist' !! i'
 
 {-| Ramène le prochain élément plus récent dans l'historique.
 -}
@@ -209,8 +215,8 @@ goDownInHistory = do
     i'   <- prompt.idx <.= max 0 (i-1)
     if i == 1 then do
       prompt.history     %= tail
-      prompt.inputString .= head hist
-    else when (i>1) $ prompt.inputString .= hist !! i'
+      prompt.inputText .= head hist
+    else when (i>1) $ prompt.inputText .= hist !! i'
 
 resetPrompt :: StateT DisplayState Curses ()
 resetPrompt  = do
@@ -239,8 +245,8 @@ handleEvents p = do
   all_emojis <- ask
   R.lift $ iterateUntil p $ do
     promptp <- use $ prompt.prefix
-    let x0     = fromIntegral $ length promptp
-        xmax s = x0 + fromIntegral (length s)
+    let x0     = fromIntegral $ T.length promptp
+        xmax t = x0 + fromIntegral (T.length t)
     win    <- ST.lift defaultWindow
     jev    <- ST.lift $ getEvent win Nothing
     (y, x) <- ST.lift $ getCursor win
@@ -249,60 +255,61 @@ handleEvents p = do
         updateW    = ST.lift . updateWindow win
         emoji i         = getEmoji the_emojis (i-1)
         emojiInfo i     = getEmojiInfo the_emojis (i-1)
-        emojiPlusInfo i = emoji i ++ " " ++ "(" ++ emojiInfo i ++ ")"
-        clearInput = updateW (moveCursor y x0 >> clearLine) >> prompt.inputString .= ""
+        emojiPlusInfo i = emoji i `append` " " `append` "(" `append` emojiInfo i `append` ")"
+        clearInput = updateW (moveCursor y x0 >> clearLine) >> prompt.inputText .= ""
         moveRight  = do
-          s <- use $ prompt.inputString
-          when (x < xmax s) $ updateW $ moveCursor y (x+1)
+          t <- use $ prompt.inputText
+          when (x < xmax t) $ updateW $ moveCursor y (x+1)
         moveLeft = when (x > x0) $ updateW $ moveCursor y (x-1)
         goInHistory dir = do
           case dir of
             "up"   -> goUpInHistory
             "down" -> goDownInHistory
             _      -> return ()
-          s <- use $ prompt.inputString
+          t <- use $ prompt.inputText
           hoist (updateWindow win) drawPrompt
-          updateW $ drawBottomInfo $ if validChoice s n then emojiPlusInfo (read s) else ""
+          let i = readDecimal t
+          updateW $ drawBottomInfo $ if validChoice t n then emojiPlusInfo i else ""
     ev  <- case jev of
       Just e@(EventCharacter '\n')           -> return e
       Just e@(EventSpecialKey KeyLeftArrow)  -> moveLeft           >> return e
       Just e@(EventSpecialKey KeyRightArrow) -> moveRight          >> return e
       Just e@(EventSpecialKey KeyBackspace)  -> doBackspace        >> return e
-      Just e@(EventSpecialKey KeyUpArrow)    -> goInHistory "up"   >> return e
-      Just e@(EventSpecialKey KeyDownArrow)  -> goInHistory "down" >> return e
+      Just e@(EventSpecialKey KeyUpArrow)    -> goInHistory ("up"::String)   >> return e
+      Just e@(EventSpecialKey KeyDownArrow)  -> goInHistory ("down"::String) >> return e
       Just e@(EventCharacter c) -> do
-        s <- use $ prompt.inputString
-        let clearInputAndCopy s = when (validChoice s n) $ do
-              let i = read s
+        t <- use $ prompt.inputText
+        let clearInputAndCopy txt = when (validChoice txt n) $ do
+              let i = readDecimal txt
               clearInput
               ST.lift $ liftIO $ copyToClipBoard $ emoji i
-              updateW $ drawBottomInfo $ emojiPlusInfo i ++ " copié dans le presse-papier..."
+              updateW $ drawBottomInfo $ emojiPlusInfo i `append` " copié dans le presse-papier..."
               resetPrompt
-              when (validChoice s n) $ prompt.history %= (\ hist ->
-                  s : (if length hist >= maxHistorySize then init hist else hist)
+              when (validChoice txt n) $ prompt.history %= (\ hist ->
+                  txt : (if length hist >= maxHistorySize then init hist else hist)
                 )
-        if      c == ctrlKey 'y' then clearInputAndCopy s
+        if      c == ctrlKey 'y' then clearInputAndCopy t
         else if c == ctrlKey 'h' then showHelp
         else if c == ctrlKey 't' then do
           mfzfed_emojis <- runMaybeT $ filterEmojis all_emojis
           redrawMenu
           when (isNothing mfzfed_emojis) $ updateW $ drawBottomInfo "erreur: fzf est introuvable..."
-        else if c == ctrlKey 'i' then when (validChoice s n) $ do
-          let i = read s
+        else if c == ctrlKey 'i' then when (validChoice t n) $ do
+          let i = readDecimal t
           updateW $ drawBottomInfo $ emojiPlusInfo i
         else if c == ctrlKey 'r' then do
           i <- ST.lift $ liftIO $ randomRIO (1, length the_emojis - 1)
-          clearInputAndCopy (show i)
+          clearInputAndCopy $ pack $ show i
         -- Quelques touches de readline
-        else if c == ctrlKey 'p' then goInHistory "up"
-        else if c == ctrlKey 'n' then goInHistory "down"
+        else if c == ctrlKey 'p' then goInHistory ("up" :: String)
+        else if c == ctrlKey 'n' then goInHistory ("down" :: String)
         else if c == ctrlKey 'l' then redrawMenu
         else if c == ctrlKey 'u' then clearInput
-        else if c == ctrlKey 'd' then when (x < xmax s) $ moveRight >> doBackspace
+        else if c == ctrlKey 'd' then when (x < xmax t) $ moveRight >> doBackspace
         else if c == ctrlKey 'b' then moveLeft
         else if c == ctrlKey 'f' then moveRight
         else if c == ctrlKey 'a' then updateW $ moveCursor y x0
-        else if c == ctrlKey 'e' then updateW $ moveCursor y $ xmax s
+        else if c == ctrlKey 'e' then updateW $ moveCursor y $ xmax t
         -- On affiche tout autre caractère à la ligne.
         else do
           updateW $ drawString [c]
@@ -318,12 +325,13 @@ handleEvents p = do
 
    Hypothèse: le curseur Curses se trouve au niveau de la ligne d'entrée usager.
 -}
-drawBottomInfo :: String -> Update ()
+drawBottomInfo :: Text -> Update ()
 drawBottomInfo infos = do
   (y, x) <- cursorPosition
+  (_, w) <- (& _2 %~ fromInteger) <$> windowSize
   moveCursor (y+1) 0
   clearLine
-  unless (null infos) $ drawString $ "`--> " ++ infos
+  unless (T.null infos) $ drawText $ pack "`--> " `append` infos
   moveCursor y x
 
 {-| Dessine l'invite d'entrée pour l'utilisateur.
@@ -335,7 +343,7 @@ drawPrompt = do
   (h, w)   <- ST.lift windowSize
   esl      <- use emojis
   promptp  <- use $ prompt.prefix
-  inputstr <- use $ prompt.inputString
+  inputtxt <- use $ prompt.inputText
   let mec = maxEntryCount w h esl
       n   = length esl
   ST.lift $ do
@@ -362,7 +370,7 @@ redrawMenu = do
   (h, w)   <- ST.lift screenSize
   ST.lift $ updateWindow win clear
   let scw = fromIntegral $ spacedColWidth w esl
-      sufficient_space = fromIntegral w >= maximum [scw, length promptp, length truncatedMsg]
+      sufficient_space = fromIntegral w >= maximum [scw, T.length promptp, T.length truncatedMsg]
                          && h >= 3
   if sufficient_space then do
     ST.lift $ updateWindow win $ writeChoices esl
@@ -384,14 +392,14 @@ handleInput = do
       n = fromIntegral $ length the_emojis
   s <- iterateWhile (not . flip validChoice n) $ do
     ev      <- handleEvents userReadyOrResize
-    pchoice <- R.lift $ use $ prompt.inputString
+    pchoice <- R.lift $ use $ prompt.inputText
     if ev == EventResized then R.lift redrawMenu >> return ""
                           else return pchoice
-  return $ read s
+  return $ readDecimal s
 
 {-| Affiche le menu d'emoji à l'utilisateur et lui permet de choisir son emoji.
 -}
-emojiMenu :: DecodedCsv -> IO String
+emojiMenu :: DecodedCsv -> IO Text
 emojiMenu init_emojis = runCurses $ do
   -- Configure NCurses
   setEcho False

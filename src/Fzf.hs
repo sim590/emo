@@ -4,6 +4,9 @@ module Fzf (
 ) where
 
 import Data.Either
+import Data.Text.Lazy.Encoding
+import Data.Text.Lazy (fromStrict)
+import qualified Data.Text.IO as DIO
 
 import System.IO
 import System.Process
@@ -26,10 +29,10 @@ fzf csv = do
       (Just hin, Just hout, _, hp) <- lift $ createProcess (proc "fzf" ["-m"]) { std_in=CreatePipe
                                                                                , std_out=CreatePipe
                                                                                }
-      lift $ BL.hPut hin $ encode csv
+      lift $ BL.hPut hin $ encodeUtf8 $ fromStrict $ encode csv
       lift $ hClose hin
       _ <- lift $ waitForProcess hp
-      ecsv <- lift $ decode <$> hGetContents hout
+      ecsv <- lift $ decode <$> DIO.hGetContents hout
       guard $ isRight ecsv
       return $ fromRight [] ecsv
 

@@ -1,28 +1,39 @@
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module Utils where
+
 
 import Control.Monad.State
 import Control.Monad.Reader
 
+import Control.Lens
+
+import Data.Text
+import Data.Text.Read
+
 import Csv (DecodedCsv)
+
+readDecimal :: Text -> Int
+readDecimal t = decimal t ^?! _Right ^. _1
 
 {-|
    Sélectionne l'emoji dans la liste des données décodées par l'analyseur du
    CSV.
 -}
-getEmoji :: DecodedCsv -> Int -> String
+getEmoji :: DecodedCsv -> Int -> Text
 getEmoji emojis = snd . (emojis !!)
 
 {-|
    Sélectionne l'information relative à l'emoji dans la liste des données
    décodées par l'analyseur du CSV.
 -}
-getEmojiInfo :: DecodedCsv -> Int -> String
+getEmojiInfo :: DecodedCsv -> Int -> Text
 getEmojiInfo emojis = fst . (emojis !!)
 
 {-| Texte d'aide pour les touches au menu interactif.
 -}
-keyMapsHelpText :: [String]
+keyMapsHelpText :: [Text]
 keyMapsHelpText = [
                    "CTRL+H:    affiche ce texte d'aide."
                  , "CTRL+Y:    efface l'entrée et copie l'emoji associé au choix si l'entrée est valide."

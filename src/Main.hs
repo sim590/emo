@@ -1,6 +1,9 @@
 
 module Main where
 
+import Data.Text (Text)
+import qualified Data.Text.IO as DIO
+
 import Data.Maybe
 
 import System.IO
@@ -25,7 +28,7 @@ import Utils
      directement.
    * Sinon, le menu interactif est affiché à l'utilisateur.
 -}
-selectEmoji :: Opts.Options -> Csv.DecodedCsv -> IO String
+selectEmoji :: Opts.Options -> Csv.DecodedCsv -> IO Text
 selectEmoji opts emojis = do
   let cmdline_choice = fromJust $ Opts.optChoice opts
   case Opts.optSelect opts of
@@ -54,7 +57,7 @@ main =
 
   -- Décodage du fichier CSV
   inFile <- Opts.optInfile opts
-  csv    <- readFile inFile
+  csv    <- DIO.readFile inFile
   emojis <- case Csv.decode csv of
               Left err -> do
                 putStrLn err
@@ -64,7 +67,7 @@ main =
   emoji <- if Opts.optRandom opts then getEmoji emojis <$> randomRIO (1, length emojis - 1)
                              else selectEmoji opts emojis
   copyToClipBoard emoji
-  unless (Opts.optSilent opts) $ putStrLn emoji
+  unless (Opts.optSilent opts) $ DIO.putStrLn emoji
 
   exitSuccess
 
