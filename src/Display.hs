@@ -99,6 +99,9 @@ maxColWidth winWmax es = min winWmax (eWmax es)
 maxEntryCount :: Integer -> Integer -> DecodedCsv -> Int
 maxEntryCount w h es = fromInteger $ (h-3) * maxColCount w es
 
+drawTextSafely :: Int -> Text -> Update ()
+drawTextSafely wmax t = drawText $ T.take (min wmax (T.length t)) t
+
 {-| Affiche une chaîne de caractère avec un attribut donné.
 -}
 drawTextWithAttr :: Attribute -> Text -> Update ()
@@ -131,7 +134,7 @@ showHelp = do
         hpad        = fromJust jpad
     ST.lift $ updatePad hpad 0 0 padY padX h w $ do
       clear
-      drawText "\n"       -- passer première ligne pour la bordure ...
+      drawText "\n" -- passer première ligne pour la bordure ...
       drawBoldText header
     ST.lift $ updatePad hpad 0 0 padY padX h w $ forM_ keyMapsHelpText $ \ l ->
       drawText $ T.replicate (osWidth biggestWidth) " " `append` l `append` "\n"
@@ -154,7 +157,7 @@ writeChoices es = do
       drawIthEmoji i (_, e) = do
         let (y, x) = (i `div` mcc, (i `mod` mcc) * (scw + colOs))
         moveCursor y x
-        drawText $ pack (show (i+1)) `append` pack ") " `append` e
+        drawTextSafely (fromInteger (w-x)) $ pack (show (i+1)) `append` pack ") " `append` e
         return $ i + 1
   foldM_ drawIthEmoji 0 $ take (maxEntryCount w h es) es
   (y, _) <- cursorPosition
@@ -189,7 +192,7 @@ doBackspace = do
     ST.lift $ updateWindow win $ do
       moveCursor y x0
       clearLine
-      drawString resul
+      drawTextSafely (fromInteger (w-x0)) resul
       moveCursor y (x-1)
 
 {-| Ramène le prochain élément moins récent dans l'historique.
@@ -249,6 +252,7 @@ handleEvents p = do
         xmax t = x0 + fromIntegral (T.length t)
     win    <- ST.lift defaultWindow
     jev    <- ST.lift $ getEvent win Nothing
+    (_, w) <- ST.lift screenSize
     (y, x) <- ST.lift $ getCursor win
     the_emojis <- use emojis
     let n = fromIntegral $ length the_emojis
@@ -312,8 +316,9 @@ handleEvents p = do
         else if c == ctrlKey 'e' then updateW $ moveCursor y $ xmax t
         -- On affiche tout autre caractère à la ligne.
         else do
-          updateW $ drawString [c]
-          prompt.inputString .= s ++ [c]
+          let c' = c `T.cons` T.empty
+          updateW $ drawTextSafely (fromInteger (w-x-1)) c'
+          prompt.inputText .= t `append` c'
         return e
       Just e -> return e
       _      -> return $ EventUnknown 0
@@ -331,7 +336,7 @@ drawBottomInfo infos = do
   (_, w) <- (& _2 %~ fromInteger) <$> windowSize
   moveCursor (y+1) 0
   clearLine
-  unless (T.null infos) $ drawText $ pack "`--> " `append` infos
+  unless (T.null infos) $ drawTextSafely w $ "`--> " `append` infos
   moveCursor y x
 
 {-| Dessine l'invite d'entrée pour l'utilisateur.
@@ -351,12 +356,12 @@ drawPrompt = do
 
     moveCursor (y-1) 0
     clearLine
-    unless (n <= mec) $ drawString truncatedMsg
+    unless (n <= mec) $ drawTextSafely (fromInteger w) truncatedMsg
 
     moveCursor y 0
     clearLine
-    drawString promptp
-    drawString inputstr
+    drawTextSafely (fromInteger w) promptp
+    drawTextSafely (fromInteger w - T.length promptp) inputtxt
 
 {-| Redessine le menu.
 
@@ -377,7 +382,7 @@ redrawMenu = do
     hoist (updateWindow win) drawPrompt
   else ST.lift $ updateWindow win $ do
     let w_too_small = "err: Fenêtre trop petite..."
-    when (w >= fromIntegral (length w_too_small)) $ drawString w_too_small
+    drawTextSafely (fromInteger w) w_too_small
   ST.lift render
 
 {-| Boucle sur les caractères et événements envoyés par l'utilisateur.
