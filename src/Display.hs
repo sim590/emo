@@ -108,9 +108,13 @@ maxColWidth winWmax es = min winWmax (eWmax es)
 maxEntryCount :: Integer -> Integer -> DecodedCsv -> Int
 maxEntryCount w h es = fromInteger $ (h-3) * maxColCount w es
 
+{-| TODO
+-}
 drawTextSafely :: Int -> Text -> Update ()
 drawTextSafely wmax t = drawText $ T.take (min wmax (T.length t)) t
 
+{-| TODO
+-}
 takeBytesFromText :: Int -> Text -> Text
 takeBytesFromText wmax t = toText $ BL.take (min wmax64 blen) bytes
   where bytes    = fromText t
@@ -157,6 +161,8 @@ showHelp = do
       drawText $ T.replicate (osWidth biggestWidth) " " `append` l `append` "\n"
     ST.lift $ updatePad hpad 0 0 padY padX h w $ drawBox Nothing Nothing
 
+{-| TODO
+-}
 filterEmojis :: DecodedCsv -> MaybeT (StateT DisplayState Curses) DecodedCsv
 filterEmojis all_emojis = do
   next_emojis <- hoist liftIO $ fzf all_emojis
