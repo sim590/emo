@@ -264,7 +264,7 @@ handleEvents p = do
         xmax t = x0 + fromIntegral (T.length t)
     win    <- ST.lift defaultWindow
     jev    <- ST.lift $ getEvent win Nothing
-    (_, w) <- ST.lift screenSize
+    (h, w) <- ST.lift screenSize
     (y, x) <- ST.lift $ getCursor win
     the_emojis <- use emojis
     let n = fromIntegral $ length the_emojis
@@ -272,7 +272,7 @@ handleEvents p = do
         emoji i         = getEmoji the_emojis (i-1)
         emojiInfo i     = getEmojiInfo the_emojis (i-1)
         emojiPlusInfo i = emoji i `append` " " `append` "(" `append` emojiInfo i `append` ")"
-        clearInput = updateW (moveCursor y x0 >> clearLine) >> prompt.inputText .= ""
+        clearInput = updateW (moveCursor (h-2) x0 >> clearLine) >> prompt.inputText .= ""
         moveRight  = do
           t <- use $ prompt.inputText
           when (x < xmax t) $ updateW $ moveCursor y (x+1)
