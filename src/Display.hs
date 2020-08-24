@@ -13,6 +13,10 @@ import Data.Maybe
 
 import Data.Text (Text, append, pack)
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Encoding as E
+
+import qualified Data.ByteString.Lazy as BL
 
 import Data.Text.Read
 
@@ -101,6 +105,14 @@ maxEntryCount w h es = fromInteger $ (h-3) * maxColCount w es
 
 drawTextSafely :: Int -> Text -> Update ()
 drawTextSafely wmax t = drawText $ T.take (min wmax (T.length t)) t
+
+takeBytesFromText :: Int -> Text -> Text
+takeBytesFromText wmax t = toText $ BL.take (min wmax64 blen) bytes
+  where bytes    = fromText t
+        blen     = BL.length bytes
+        wmax64   = fromIntegral wmax
+        fromText = E.encodeUtf8 . TL.fromStrict
+        toText   = TL.toStrict . E.decodeUtf8
 
 {-| Affiche une chaîne de caractère avec un attribut donné.
 -}
@@ -336,7 +348,10 @@ drawBottomInfo infos = do
   (_, w) <- (& _2 %~ fromInteger) <$> windowSize
   moveCursor (y+1) 0
   clearLine
-  unless (T.null infos) $ drawTextSafely w $ "`--> " `append` infos
+  unless (T.null infos) $ do
+    let infoText = "`--> " `append` infos
+        safeText = takeBytesFromText w infoText
+    drawTextSafely w safeText
   moveCursor y x
 
 {-| Dessine l'invite d'entrée pour l'utilisateur.
