@@ -108,12 +108,15 @@ maxColWidth winWmax es = min winWmax (eWmax es)
 maxEntryCount :: Integer -> Integer -> DecodedCsv -> Int
 maxEntryCount w h es = fromInteger $ (h-3) * maxColCount w es
 
-{-| TODO
+{-| Dessine du texte à la position du curseur tout en assurant que la longueur
+   du texte ne dépasse pas la taille passée en paramètres.
 -}
 drawTextSafely :: Int -> Text -> Update ()
 drawTextSafely wmax t = drawText $ T.take (min wmax (T.length t)) t
 
-{-| TODO
+{-| Tronque le texte octets par octets (par le type ByteString). Ceci est
+   nécessaire afin de se conformer aux informations passées par NCurses sur la
+   taille de l'écran.
 -}
 takeBytesFromText :: Int -> Text -> Text
 takeBytesFromText wmax t = toText $ BL.take (min wmax64 blen) bytes
@@ -161,7 +164,7 @@ showHelp = do
       drawText $ T.replicate (osWidth biggestWidth) " " `append` l `append` "\n"
     ST.lift $ updatePad hpad 0 0 padY padX h w $ drawBox Nothing Nothing
 
-{-| TODO
+{-| Filtre les emojis à l'aide de FZF.
 -}
 filterEmojis :: DecodedCsv -> MaybeT (StateT DisplayState Curses) DecodedCsv
 filterEmojis all_emojis = do
