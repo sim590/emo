@@ -66,6 +66,11 @@ maxHistorySize = 1000
 ctrlKey :: Char -> Char
 ctrlKey c = chr (ord c - 96)
 
+{-| Le caractère représentant la touche ESC
+-}
+escapeKey :: Char
+escapeKey = chr 27
+
 {-| Message s'affichant lorsque la liste des choix est tronquée.
 -}
 truncatedMsg :: Text
@@ -246,7 +251,7 @@ resetPrompt  = do
    * CTRL+R: choix aléatoire d'un emoji et le copie dans la presse-papier.
    * CTRL+P / flèche haut: remonte l'historique
    * CTRL+N / flèche bas: redescend l'historique
-   * CTRL+L: redessine l'écran.
+   * CTRL+L / ESC: redessine l'écran.
    * CTRL+B / flèche gauche: déplace le curseur vers la gauche.
    * CTRL+F / flèche droite: déplace le curseur vers la droite.
    * CTRL+A: déplace le curseur au début de la ligne.
@@ -304,7 +309,8 @@ handleEvents p = do
               when (validChoice txt n) $ prompt.history %= (\ hist ->
                   txt : (if length hist >= maxHistorySize then init hist else hist)
                 )
-        if      c == ctrlKey 'y' then clearInputAndCopy t
+        if      c == escapeKey   then redrawMenu
+        else if c == ctrlKey 'y' then clearInputAndCopy t
         else if c == ctrlKey 'h' then showHelp
         else if c == ctrlKey 't' then do
           mfzfed_emojis <- runMaybeT $ filterEmojis all_emojis

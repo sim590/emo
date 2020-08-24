@@ -51,7 +51,7 @@ Choix (valeurs entre 1 et 110) ?
 
 **Style `readline`**
 
-* `CTRL+L`: redessine l'écran.
+* `CTRL+L` / `ESC`: redessine l'écran.
 * `CTRL+P` / flèche haut: remonte l'historique
 * `CTRL+N` / flèche bas: redescend l'historique
 * `CTRL+B` / flèche gauche: déplace le curseur vers la gauche.
