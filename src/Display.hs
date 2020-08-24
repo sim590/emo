@@ -180,10 +180,15 @@ writeChoices es = do
   (h, w) <- windowSize
   let mcc = maxColCount w es
       scw = spacedColWidth w es
+      -- FIXME: ma méthode d'écriture ici ne fonctionne que pour les caractères
+      -- sur un octet (utf-8). Si des caractères à plusieurs octets sont passés,
+      -- on risque de corrompre ce qui a déjà été écrit.
+      -- TODO: Il faudrait repositionner le curseur avec le nombre d'octets
+      -- calculés par ByteString.
       drawIthEmoji i (_, e) = do
         let (y, x) = (i `div` mcc, (i `mod` mcc) * (scw + colOs))
         moveCursor y x
-        drawTextSafely (fromInteger (w-x)) $ pack (show (i+1)) `append` pack ") " `append` e
+        drawText $ pack (show (i+1)) `append` pack ") " `append` e
         return $ i + 1
   foldM_ drawIthEmoji 0 $ take (maxEntryCount w h es) es
   (y, _) <- cursorPosition
