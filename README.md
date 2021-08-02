@@ -107,6 +107,21 @@ $ cabal new-build
 Sur une machine 64-bit, le binaire résultant se trouve au chemin
 `dist-newstyle/build/x86_64-linux/ghc-8.6.5/emo-0.1.0.0/x/emo/build/emo/emo`.
 
+**NOTE**: il est possible que le paquet Haskell de NCurses ne compile pas
+correctement tout dépendant de la plateforme. Par exemple la compilation pourrait donner:
+
+```
+<command line>: can't load .so/.DLL for: /usr/lib/gcc/x86_64-pc-linux-gnu/11.1.0/../../../../lib/libpanel.so (-lpanelw: cannot open shared object file: No such file or directory)
+```
+
+Pour corriger ce problème il est possible que le fanion de compilation
+`use-pkgconfig` du paquet NCurses aide tout dépendant de la plateforme. Entre
+autres, sur Archlinux, il faut l'utiliser en date du 2021-08-02:
+
+```
+$ cabal new-build --constraint="ncurses+use-pkgconfig"
+```
+
 ### Utilisation
 
 Après avoir compilé, on peut simplement utiliser le programme comme suit:
